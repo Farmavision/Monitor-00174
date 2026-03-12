@@ -2,73 +2,163 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Farmavision - Monitor Vetrina</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmavision Monitor - Pro</title>
     <style>
-        body { background-color: #000; color: #fff; font-family: Arial; margin: 0; overflow: hidden; }
-        #header { background: #008f39; padding: 15px; text-align: center; font-size: 2em; font-weight: bold; }
-        #container { padding: 20px; height: 75vh; }
-        .farmacia-card { border-bottom: 1px solid #333; padding: 15px 0; }
-        .nome { color: #00ff00; font-size: 2.5em; font-weight: bold; }
-        .indirizzo { font-size: 1.8em; }
-        
-        /* AREA ADVERTISING */
-        #adv-bar {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: #ffcc00; /* Giallo cattura attenzione */
-            color: #000;
+        body { 
+            background-color: #000; 
+            color: #fff; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header { 
+            background: linear-gradient(180deg, #008f39 0%, #006428 100%);
+            padding: 20px; 
+            text-align: center; 
+            font-size: 3vw; 
+            font-weight: 900; 
+            border-bottom: 4px solid #fff;
+            position: relative;
+        }
+
+        #container { 
+            flex-grow: 1;
+            padding: 10px 40px;
+            overflow-y: auto;
+        }
+
+        .farmacia-card { 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333; 
             padding: 15px 0;
-            font-size: 2em;
-            font-weight: bold;
-            white-space: nowrap;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .info-farmacia { flex: 1; }
+
+        .nome { 
+            color: #2ecc71; 
+            font-size: 3.2vw; 
+            font-weight: bold; 
+            text-transform: uppercase; /* MODIFICA 1: Tutto maiuscolo */
+            margin-bottom: 5px;
+        }
+
+        .indirizzo { font-size: 2vw; color: #ecf0f1; }
+
+        /* MODIFICA 2: Stile QR Code */
+        .qr-container {
+            margin-left: 20px;
+            background: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .qr-container img { width: 100px; height: 100px; }
+        .qr-label { color: #000; font-size: 0.8vw; font-weight: bold; margin-top: 2px; }
+
+        #adv-bar {
+            background: #f1c40f; 
+            color: #000;
+            height: 70px;
+            display: flex;
+            align-items: center;
             overflow: hidden;
+            border-top: 4px solid #fff;
         }
+
         .marquee {
-            display: inline-block;
-            padding-left: 100%;
-            animation: marquee 20s linear infinite;
+            white-space: nowrap;
+            font-size: 2.2vw;
+            font-weight: 800;
+            animation: marquee 25s linear infinite;
         }
-        @keyframes marquee {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
-        }
+
+        @keyframes marquee { 0% { transform: translate(100%, 0); } 100% { transform: translate(-100%, 0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #clock { position: absolute; top: 25px; right: 30px; font-size: 1.5vw; }
     </style>
 </head>
 <body>
 
-<div id="header">FARMACIE DI TURNO</div>
-<div id="container">Caricamento in corso...</div>
+<div id="header">
+    FARMACIE DI TURNO
+    <div id="clock">00:00:00</div>
+</div>
+
+<div id="container">
+    <div style="text-align:center; margin-top:50px;">Caricamento dati...</div>
+</div>
 
 <div id="adv-bar">
-    <div class="marquee" id="adv-text">OFFERTA DEL MESE: Sconto 20% su tutti i Solari! — Farmavision: La tua vetrina intelligente.</div>
+    <div class="marquee" id="adv-text">BENVENUTI SU FARMAVISION — CONSULTA I TURNI E INQUADRA IL QR PER LE MAPPE — </div>
 </div>
 
 <script>
-    // Inserisci qui il tuo link CSV di Google Sheets
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv';
 
     async function updateMonitor() {
         try {
             const response = await fetch(csvUrl + '&cb=' + Date.now());
             const data = await response.text();
-            const rows = data.split('\n').slice(1);
-            let html = '';
-            rows.forEach(row => {
-                const cols = row.split(',');
-                if (cols.length >= 2) {
-                    html += `<div class="farmacia-card">
-                        <div class="nome">${cols[0].replace(/"/g, '')}</div>
-                        <div class="indirizzo">${cols[1].replace(/"/g, '')}</div>
-                    </div>`;
+            const rows = data.split('\n').map(row => row.split(','));
+            
+            let farmacieHtml = '';
+            let offertaTesto = "BENVENUTI DA FARMAVISION — ";
+
+            for (let i = 1; i < rows.length; i++) {
+                const col = rows[i];
+                if (col.length >= 2) {
+                    // Pulizia dati e Maiuscolo forzato
+                    const nome = col[0].replace(/"/g, '').toUpperCase(); 
+                    const indirizzo = col[1].replace(/"/g, '');
+                    const linkMappa = col[3] ? col[3].replace(/"/g, '').trim() : ''; // Colonna D (indice 3)
+
+                    // Generazione HTML QR Code se il link esiste
+                    let qrHtml = '';
+                    if (linkMappa.startsWith('http')) {
+                        const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(linkMappa)}&choe=UTF-8`;
+                        qrHtml = `
+                            <div class="qr-container">
+                                <img src="${qrUrl}" alt="QR Mappa">
+                                <div class="qr-label">MAPPA</div>
+                            </div>`;
+                    }
+
+                    farmacieHtml += `
+                        <div class="farmacia-card">
+                            <div class="info-farmacia">
+                                <div class="nome">${nome}</div>
+                                <div class="indirizzo">${indirizzo}</div>
+                            </div>
+                            ${qrHtml}
+                        </div>`;
                 }
-            });
-            document.getElementById('container').innerHTML = html;
+            }
+
+            document.getElementById('container').innerHTML = farmacieHtml || '<div class="nome">Nessun turno trovato</div>';
         } catch (e) { console.error(e); }
     }
 
-    setInterval(updateMonitor, 900000);
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
+    }
+
+    setInterval(updateMonitor, 300000);
+    setInterval(updateClock, 1000);
     updateMonitor();
+    updateClock();
 </script>
+
 </body>
 </html>
