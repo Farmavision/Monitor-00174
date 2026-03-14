@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farmavision - Monitor Turni</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #001529;
@@ -19,10 +19,13 @@
             color: var(--text-color);
             font-family: 'Montserrat', sans-serif;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
 
         header {
-            height: 15vh;
+            height: 12vh;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -32,54 +35,77 @@
         }
 
         .logo { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
-        .clock { font-size: 2rem; }
+        .clock { font-size: 2.2rem; font-weight: 700; }
+
+        .legal-notice {
+            padding: 15px 50px 0;
+            font-size: 1rem;
+            line-height: 1.4;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
         main {
-            height: 70vh;
-            padding: 40px;
+            flex-grow: 1;
+            padding: 20px 50px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+            overflow: hidden;
         }
 
         .farmacia-card {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 15px;
+            background: rgba(255,255,255,0.08);
+            padding: 25px 40px;
+            border-radius: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            animation: fadeIn 1s ease-in;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: fadeIn 0.8s ease-out;
         }
 
-        .info h2 { margin: 0; font-size: 2.5rem; text-transform: uppercase; color: var(--accent-color); }
-        .info p { margin: 5px 0 0; font-size: 1.8rem; opacity: 0.9; }
+        .info h2 { 
+            margin: 0; font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase;
+        }
+        .info p { 
+            margin: 10px 0 0; font-size: 1.8rem; opacity: 0.9;
+        }
 
         .qr-code { text-align: center; }
         .qr-code img {
-            width: 160px;
-            height: 160px;
-            border: 8px solid white;
-            border-radius: 10px;
+            width: 140px; height: 140px; border: 8px solid white; border-radius: 10px;
         }
-        .qr-code span { display: block; color: white; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
+        .qr-code span { display: block; font-size: 0.8rem; margin-top: 5px; font-weight: 800; }
 
-        #status-msg { text-align: center; margin-top: 10vh; }
-        .numero-emergenza { color: #ff4d4f; font-size: 4rem; margin-top: 20px; font-weight: 800; }
-
+        /* Stile Barra News Scorrevole */
         footer {
-            height: 15vh;
+            height: 10vh;
             background: var(--accent-color);
             color: var(--bg-color);
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 800;
-            text-align: center;
+            overflow: hidden;
+            position: relative;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .news-ticker {
+            white-space: nowrap;
+            padding-left: 100%;
+            display: inline-block;
+            animation: ticker 30s linear infinite;
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -89,18 +115,20 @@
         <div class="clock" id="live-clock">00:00:00</div>
     </header>
 
+    <div class="legal-notice">
+        Elenco delle farmacie di turno che prestano servizio assistenziale continuato ai sensi della legge vigente...
+    </div>
+
     <main id="container">
-        <div id="status-msg">
-            <h1>Caricamento turni...</h1>
-        </div>
-    </main>
+        </main>
 
     <footer>
-        SERVIZIO CONTINUATO - INQUADRA IL QR PER IL NAVIGATORE
+        <div class="news-ticker">
+            +++ SERVIZIO CONTINUATO: INQUADRA IL QR CODE PER AVVIARE IL NAVIGATORE +++ SCOPRI I NOSTRI SERVIZI IN FARMACIA +++ PRENOTAZIONI CUP ATTIVE +++
+        </div>
     </footer>
 
     <script>
-    // Il link esatto che mi hai fornito con l'aggiunta del timer per saltare la cache
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv&t=' + new Date().getTime();
 
     function updateClock() {
@@ -113,42 +141,22 @@
     async function fetchTurni() {
         const container = document.getElementById('container');
         try {
-            console.log("Tentativo di recupero dati...");
             const response = await fetch(SHEET_URL);
-            
-            if (!response.ok) throw new Error("Risposta server non OK");
-            
             const text = await response.text();
-            console.log("Dati grezzi ricevuti:", text);
-
-            // Pulizia righe: rimuove spazi vuoti e l'intestazione
-            const rows = text.split(/\r?\n/).filter(row => row.trim().length > 10);
+            const rows = text.split(/\r?\n/);
             
-            // Rimuoviamo la prima riga se contiene "nome" o "indirizzo"
-            if (rows.length > 0 && (rows[0].toLowerCase().includes("nome") || rows[0].toLowerCase().includes("farmacia"))) {
-                rows.shift();
-            }
-
-            if (rows.length === 0) {
-                container.innerHTML = `
-                    <div id="status-msg">
-                        <h1 style="font-size: 3.5rem;">AGGIORNAMENTO TURNI IN CORSO</h1>
-                        <p style="font-size: 1.8rem;">I nuovi turni saranno disponibili a breve.</p>
-                        <div class="numero-emergenza">112 / 118</div>
-                    </div>`;
-                return;
-            }
-
             container.innerHTML = ''; 
-            rows.forEach(row => {
-                // Split più semplice per evitare errori
+            
+            rows.forEach((row, index) => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (index === 0 || row.trim().length < 10) return;
+
                 if (cols.length >= 2) {
                     const nome = cols[0].replace(/"/g, "").trim();
                     const indirizzo = cols[1].replace(/"/g, "").trim();
-                    
-                    // Link Google Maps standard
-                    const mapsLink = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(indirizzo);
+                    if (nome.toLowerCase().includes("nome")) return;
+
+                    const mapsLink = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(nome + " " + indirizzo);
                     const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(mapsLink);
                     
                     container.innerHTML += `
@@ -165,12 +173,10 @@
                 }
             });
         } catch (error) {
-            console.error("Errore dettagliato:", error);
-            container.innerHTML = `<div id="status-msg"><h1>Errore di caricamento</h1><p>Controlla che il Foglio Google sia "Pubblicato sul Web" come CSV.</p></div>`;
+            container.innerHTML = `<h1 style="text-align:center">Caricamento in corso...</h1>`;
         }
     }
 
-    // Forza il primo caricamento e poi ogni 5 minuti
     fetchTurni();
     setInterval(fetchTurni, 300000);
     </script>
