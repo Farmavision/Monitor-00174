@@ -99,8 +99,9 @@
         SERVIZIO CONTINUATO - INQUADRA IL QR PER IL NAVIGATORE
     </footer>
 
-    <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv';
+  <script>
+    // Ho aggiunto un parametro casuale (?v=...) per saltare la cache di Google
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv&t=' + new Date().getTime();
 
     function updateClock() {
         const now = new Date();
@@ -110,58 +111,68 @@
     updateClock();
 
     async function fetchTurni() {
+        const container = document.getElementById('container');
         try {
+            console.log("Tentativo di recupero dati...");
             const response = await fetch(SHEET_URL);
-            const text = await response.text();
             
-            const rows = text.split('\n').slice(1);
-            const container = document.getElementById('container');
-            const validRows = rows.filter(row => row.trim().length > 5);
+            if (!response.ok) throw new Error("Risposta server non OK");
+            
+            const text = await response.text();
+            console.log("Dati grezzi ricevuti:", text);
 
-            if (validRows.length === 0) {
+            // Pulizia righe: rimuove spazi vuoti e l'intestazione
+            const rows = text.split(/\r?\n/).filter(row => row.trim().length > 10);
+            
+            // Rimuoviamo la prima riga se contiene "nome" o "indirizzo"
+            if (rows.length > 0 && (rows[0].toLowerCase().includes("nome") || rows[0].toLowerCase().includes("farmacia"))) {
+                rows.shift();
+            }
+
+            if (rows.length === 0) {
                 container.innerHTML = `
                     <div id="status-msg">
                         <h1 style="font-size: 3.5rem;">AGGIORNAMENTO TURNI IN CORSO</h1>
-                        <p style="font-size: 1.8rem;">Per urgenze immediate chiamare il:</p>
+                        <p style="font-size: 1.8rem;">I nuovi turni saranno disponibili a breve.</p>
                         <div class="numero-emergenza">112 / 118</div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = ''; 
-                validRows.forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if (cols.length >= 2) {
-                        const nome = cols[0].replace(/"/g, "").trim();
-                        const indirizzo = cols[1].replace(/"/g, "").trim();
-                        
-                        // Generazione link pulito per Google Maps
-                        const mapsLink = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(indirizzo);
-                        const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(mapsLink);
-                        
-                        container.innerHTML += `
-                            <div class="farmacia-card">
-                                <div class="info">
-                                    <h2>${nome}</h2>
-                                    <p>${indirizzo}</p>
-                                </div>
-                                <div class="qr-code">
-                                    <img src="${qrUrl}" alt="QR Maps">
-                                    <span>VAI ALLA MAPPA</span>
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
+                    </div>`;
+                return;
             }
+
+            container.innerHTML = ''; 
+            rows.forEach(row => {
+                // Split più semplice per evitare errori
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length >= 2) {
+                    const nome = cols[0].replace(/"/g, "").trim();
+                    const indirizzo = cols[1].replace(/"/g, "").trim();
+                    
+                    // Link Google Maps standard
+                    const mapsLink = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(indirizzo);
+                    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(mapsLink);
+                    
+                    container.innerHTML += `
+                        <div class="farmacia-card">
+                            <div class="info">
+                                <h2>${nome}</h2>
+                                <p>${indirizzo}</p>
+                            </div>
+                            <div class="qr-code">
+                                <img src="${qrUrl}" alt="QR">
+                                <span>MAPPA</span>
+                            </div>
+                        </div>`;
+                }
+            });
         } catch (error) {
-            console.error("Errore recupero dati:", error);
-            document.getElementById('container').innerHTML = "<h1 style='text-align:center;'>Connessione al database in corso...</h1>";
+            console.error("Errore dettagliato:", error);
+            container.innerHTML = `<div id="status-msg"><h1>Errore di caricamento</h1><p>Controlla che il Foglio Google sia "Pubblicato sul Web" come CSV.</p></div>`;
         }
     }
 
-    // Aggiorna ogni 5 minuti
-    setInterval(fetchTurni, 300000);
+    // Forza il primo caricamento e poi ogni 5 minuti
     fetchTurni();
-    </script>
+    setInterval(fetchTurni, 300000);
+</script>
 </body>
 </html>
