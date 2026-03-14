@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmavision Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #001529;
+            --accent-color: #00ff88; /* Verde Farmacia */
+            --text-color: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.07);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header con Orologio */
+        header {
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent-color);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .logo { font-size: 2.5rem; font-weight: 900; color: var(--accent-color); letter-spacing: -1px; }
+        #clock { font-size: 2.2rem; font-weight: 700; }
+
+        /* Contenitore Principale */
+        main {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        /* Card Farmacia */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 10px solid var(--accent-color);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .info h2 { font-size: 3rem; margin: 0; color: var(--accent-color); text-transform: uppercase; }
+        .info p { font-size: 1.8rem; margin: 10px 0 0; opacity: 0.9; }
+
+        /* QR Code */
+        .qr-box { text-align: center; }
+        .qr-box img { 
+            width: 220px; 
+            height: 220px; 
+            border: 8px solid white; 
+            border-radius: 15px; 
+        }
+        .qr-box span { display: block; margin-top: 10px; font-size: 1rem; color: var(--accent-color); }
+
+        /* Schermata Aggiornamento / Vuoto */
+        #empty-msg {
+            text-align: center;
+            display: none;
+        }
+        .emergency-num { font-size: 5rem; color: #ff4d4f; margin: 20px 0; }
+
+        footer {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">FARMAVISION</div>
+        <div id="clock">00:00:00</div>
+    </header>
+
+    <main id="main-content">
+        <div id="list-container"></div>
+        
+        <div id="empty-msg">
+            <h1 style="font-size: 3.5rem;">AGGIORNAMENTO TURNI</h1>
+            <p style="font-size: 1.8rem;">I turni odierni sono in fase di caricamento.</p>
+            <div class="emergency-num">112 / 118</div>
+            <p>SERVIZIO GUARDIA MEDICA ATTIVO</p>
+        </div>
+    </main>
+
+    <footer>
+        INQUADRA IL QR CODE PER AVVIARE IL NAVIGATORE
+    </footer>
+
+    <script>
+        // CONFIGURAZIONE
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv';
+
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
+        }
+        setInterval(updateClock, 1000);
+
+        async function caricaDati() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const data = await response.text();
+                const rows = data.split('\n').slice(1); // Rimuove intestazione
+                
+                const listContainer = document.getElementById('list-container');
+                const emptyMsg = document.getElementById('empty-msg');
+                
+                // Filtra righe che contengono effettivamente dati
+                const farmacieValide = rows.filter(row => row.trim().length > 5);
+
+                if (farmacieValide.length === 0) {
+                    listContainer.style.display = 'none';
+                    emptyMsg.style.display = 'block';
+                } else {
+                    listContainer.style.display = 'block';
+                    emptyMsg.style.display = 'none';
+                    listContainer.innerHTML = '';
+
+                    farmacieValide.forEach(row => {
+                        // Split gestendo eventuali virgole negli indirizzi (usando regex semplice)
+                        const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        const nome = cols[0].replace(/"/g, "");
+                        const indirizzo = cols[1].replace(/"/g, "");
+
+                        // Link per navigatore Google Maps
+                        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(indirizzo)}`;
+                        // API QR Code
+                        const qrUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(mapsLink)}&choe=UTF-8`;
+
+                        listContainer.innerHTML += `
+                            <div class="card">
+                                <div class="info">
+                                    <h2>${nome}</h2>
+                                    <p>${indirizzo}</p>
+                                </div>
+                                <div class="qr-box">
+                                    <img src="${qrUrl}" alt="QR Code">
+                                    <span>VAI ALLA FARMACIA</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (e) {
+                console.error("Errore caricamento:", e);
+            }
+        }
+
+        // Aggiorna ogni 5 minuti (300000 ms)
+        setInterval(caricaDati, 300000);
+        caricaDati();
+    </script>
+</body>
+</html>
