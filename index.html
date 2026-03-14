@@ -99,8 +99,8 @@
         SERVIZIO CONTINUATO - INQUADRA IL QR PER IL NAVIGATORE
     </footer>
 
-  <script>
-    // Ho aggiunto un parametro casuale (?v=...) per saltare la cache di Google
+    <script>
+    // Il link esatto che mi hai fornito con l'aggiunta del timer per saltare la cache
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv&t=' + new Date().getTime();
 
     function updateClock() {
@@ -173,6 +173,6 @@
     // Forza il primo caricamento e poi ogni 5 minuti
     fetchTurni();
     setInterval(fetchTurni, 300000);
-</script>
+    </script>
 </body>
 </html>
