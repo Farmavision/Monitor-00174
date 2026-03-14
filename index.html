@@ -3,162 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farmavision Monitor - Pro</title>
+    <title>Farmavision - Monitor Turni</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background-color: #000; 
-            color: #fff; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            margin: 0; 
-            overflow: hidden; 
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        :root {
+            --bg-color: #001529; /* Blu notte elegante */
+            --accent-color: #00ff88; /* Verde farmacia fluo */
+            --text-color: #ffffff;
         }
 
-        #header { 
-            background: linear-gradient(180deg, #008f39 0%, #006428 100%);
-            padding: 20px; 
-            text-align: center; 
-            font-size: 3vw; 
-            font-weight: 900; 
-            border-bottom: 4px solid #fff;
-            position: relative;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden; /* Evita scroll manuale */
         }
 
-        #container { 
-            flex-grow: 1;
-            padding: 10px 40px;
-            overflow-y: auto;
-        }
-
-        .farmacia-card { 
+        /* Testata */
+        header {
+            height: 15vh;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #333; 
-            padding: 15px 0;
-            animation: fadeIn 0.8s ease-out;
+            padding: 0 50px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 2px solid var(--accent-color);
         }
 
-        .info-farmacia { flex: 1; }
+        .logo { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+        .clock { font-size: 2rem; }
 
-        .nome { 
-            color: #2ecc71; 
-            font-size: 3.2vw; 
-            font-weight: bold; 
-            text-transform: uppercase; /* MODIFICA 1: Tutto maiuscolo */
-            margin-bottom: 5px;
-        }
-
-        .indirizzo { font-size: 2vw; color: #ecf0f1; }
-
-        /* MODIFICA 2: Stile QR Code */
-        .qr-container {
-            margin-left: 20px;
-            background: #fff;
-            padding: 5px;
-            border-radius: 5px;
+        /* Area Principale */
+        main {
+            height: 70vh;
+            padding: 40px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            gap: 20px;
         }
-        .qr-container img { width: 100px; height: 100px; }
-        .qr-label { color: #000; font-size: 0.8vw; font-weight: bold; margin-top: 2px; }
 
-        #adv-bar {
-            background: #f1c40f; 
-            color: #000;
-            height: 70px;
+        .farmacia-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .info h2 { margin: 0; font-size: 2.2rem; text-transform: uppercase; }
+        .info p { margin: 5px 0 0; font-size: 1.4rem; opacity: 0.8; }
+
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+            border: 5px solid white;
+            border-radius: 10px;
+        }
+
+        /* Messaggio di aggiornamento */
+        #status-msg {
+            text-align: center;
+            margin-top: 10vh;
+        }
+
+        .numero-emergenza {
+            color: #ff4d4f;
+            font-size: 3rem;
+            margin-top: 20px;
+        }
+
+        footer {
+            height: 15vh;
+            background: var(--accent-color);
+            color: var(--bg-color);
             display: flex;
             align-items: center;
-            overflow: hidden;
-            border-top: 4px solid #fff;
-        }
-
-        .marquee {
-            white-space: nowrap;
-            font-size: 2.2vw;
+            justify-content: center;
+            font-size: 1.8rem;
             font-weight: 800;
-            animation: marquee 25s linear infinite;
         }
 
-        @keyframes marquee { 0% { transform: translate(100%, 0); } 100% { transform: translate(-100%, 0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        #clock { position: absolute; top: 25px; right: 30px; font-size: 1.5vw; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div id="header">
-    FARMACIE DI TURNO
-    <div id="clock">00:00:00</div>
-</div>
+    <header>
+        <div class="logo">FARMAVISION</div>
+        <div class="clock" id="live-clock">00:00:00</div>
+    </header>
 
-<div id="container">
-    <div style="text-align:center; margin-top:50px;">Caricamento dati...</div>
-</div>
+    <main id="container">
+        <div id="status-msg">
+            <h1>Caricamento turni...</h1>
+        </div>
+    </main>
 
-<div id="adv-bar">
-    <div class="marquee" id="adv-text">BENVENUTI SU FARMAVISION — CONSULTA I TURNI E INQUADRA IL QR PER LE MAPPE — </div>
-</div>
+    <footer>
+        SERVIZIO CONTINUATO - INQUADRA IL QR PER IL NAVIGATORE
+    </footer>
 
-<script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv';
+    <script>
+        // CONFIGURAZIONE: Incolla qui l'URL del tuo Google Sheet (esportato come JSON o CSV)
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv';
 
-    async function updateMonitor() {
-        try {
-            const response = await fetch(csvUrl + '&cb=' + Date.now());
-            const data = await response.text();
-            const rows = data.split('\n').map(row => row.split(','));
-            
-            let farmacieHtml = '';
-            let offertaTesto = "BENVENUTI DA FARMAVISION — ";
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString('it-IT');
+        }
+        setInterval(updateClock, 1000);
 
-            for (let i = 1; i < rows.length; i++) {
-                const col = rows[i];
-                if (col.length >= 2) {
-                    // Pulizia dati e Maiuscolo forzato
-                    const nome = col[0].replace(/"/g, '').toUpperCase(); 
-                    const indirizzo = col[1].replace(/"/g, '');
-                    const linkMappa = col[3] ? col[3].replace(/"/g, '').trim() : ''; // Colonna D (indice 3)
-
-                    // Generazione HTML QR Code se il link esiste
-                    let qrHtml = '';
-                    if (linkMappa.startsWith('http')) {
-                        const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(linkMappa)}&choe=UTF-8`;
-                        qrHtml = `
-                            <div class="qr-container">
-                                <img src="${qrUrl}" alt="QR Mappa">
-                                <div class="qr-label">MAPPA</div>
-                            </div>`;
-                    }
-
-                    farmacieHtml += `
-                        <div class="farmacia-card">
-                            <div class="info-farmacia">
-                                <div class="nome">${nome}</div>
-                                <div class="indirizzo">${indirizzo}</div>
+        async function fetchTurni() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const data = await response.json(); // Assumendo formato JSON
+                
+                const container = document.getElementById('container');
+                
+                if (!data || data.length === 0) {
+                    // SE IL FOGLIO È VUOTO (PULIZIA EFFETTUATA)
+                    container.innerHTML = `
+                        <div id="status-msg">
+                            <h1 style="font-size: 3rem;">AGGIORNAMENTO TURNI IN CORSO</h1>
+                            <p style="font-size: 1.5rem;">Per urgenze immediate chiamare:</p>
+                            <div class="numero-emergenza">112 / 118</div>
+                            <p style="font-size: 1.2rem; margin-top:30px;">I nuovi turni saranno disponibili a breve.</p>
+                        </div>
+                    `;
+                } else {
+                    // SE CI SONO DATI
+                    container.innerHTML = ''; // Pulisci
+                    data.forEach(farmacia => {
+                        const qrUrl = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=https://www.google.com/maps/search/${encodeURIComponent(farmacia.indirizzo)}`;
+                        
+                        container.innerHTML += `
+                            <div class="farmacia-card">
+                                <div class="info">
+                                    <h2>${farmacia.nome}</h2>
+                                    <p>${farmacia.indirizzo}</p>
+                                    <p style="color:var(--accent-color)">Distanza: ${farmacia.distanza || 'Calcolo...'}</p>
+                                </div>
+                                <div class="qr-code">
+                                    <img src="${qrUrl}" alt="QR Maps">
+                                </div>
                             </div>
-                            ${qrHtml}
-                        </div>`;
+                        `;
+                    });
                 }
+            } catch (error) {
+                console.error("Errore recupero dati", error);
             }
+        }
 
-            document.getElementById('container').innerHTML = farmacieHtml || '<div class="nome">Nessun turno trovato</div>';
-        } catch (e) { console.error(e); }
-    }
-
-    function updateClock() {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
-    }
-
-    setInterval(updateMonitor, 300000);
-    setInterval(updateClock, 1000);
-    updateMonitor();
-    updateClock();
-</script>
-
+        // Aggiorna i dati ogni 5 minuti per non sovraccaricare il sistema
+        setInterval(fetchTurni, 300000);
+        fetchTurni(); // Primo avvio
+    </script>
 </body>
 </html>
