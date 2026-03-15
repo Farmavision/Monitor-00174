@@ -3,182 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farmavision - Monitor Turni</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>Monitor Farmavision</title>
     <style>
-        :root {
-            --bg-color: #001529;
-            --accent-color: #00ff88;
-            --text-color: #ffffff;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Montserrat', sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        header {
-            height: 12vh;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 50px;
-            background: rgba(255,255,255,0.05);
-            border-bottom: 2px solid var(--accent-color);
-        }
-
-        .logo { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
-        .clock { font-size: 2.2rem; font-weight: 700; }
-
-        .legal-notice {
-            padding: 15px 50px 0;
-            font-size: 1rem;
-            line-height: 1.4;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        main {
-            flex-grow: 1;
-            padding: 20px 50px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow: hidden;
-        }
-
-        .farmacia-card {
-            background: rgba(255,255,255,0.08);
-            padding: 25px 40px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(255,255,255,0.1);
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        .info h2 { 
-            margin: 0; font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase;
-        }
-        .info p { 
-            margin: 10px 0 0; font-size: 1.8rem; opacity: 0.9;
-        }
-
-        .qr-code { text-align: center; }
-        .qr-code img {
-            width: 140px; height: 140px; border: 8px solid white; border-radius: 10px;
-        }
-        .qr-code span { display: block; font-size: 0.8rem; margin-top: 5px; font-weight: 800; }
-
-        /* Stile Barra News Scorrevole */
-        footer {
-            height: 10vh;
-            background: var(--accent-color);
-            color: var(--bg-color);
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .news-ticker {
-            white-space: nowrap;
-            padding-left: 100%;
-            display: inline-block;
-            animation: ticker 30s linear infinite;
-            font-size: 1.8rem;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; }
+        #header { padding: 30px; text-align: center; border-bottom: 2px solid #00ff88; }
+        #header-nome { font-size: 3em; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        #header-note { font-size: 1.2em; color: #00ff88; margin-top: 10px; }
+        #container-main { padding: 20px; max-width: 1200px; margin: auto; }
+        .titolo-sezione { border-left: 5px solid #00ff88; padding-left: 15px; margin: 30px 0 20px 0; font-size: 1.5em; color: #cbd5e1; }
+        #body-turni { display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #172a45; padding: 20px; border-radius: 12px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; }
+        .card-info h3 { margin: 0; color: #00ff88; font-size: 1.4em; }
+        .card-info p { margin: 5px 0; color: #8892b0; }
+        .btn-mappa { background: #00ff88; color: #0a192f; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">FARMAVISION</div>
-        <div class="clock" id="live-clock">00:00:00</div>
-    </header>
-
-    <div class="legal-notice">
-        Elenco delle farmacie di turno che prestano servizio assistenziale continuato ai sensi della legge vigente...
+    <div id="header">
+        <h1 id="header-nome">CARICAMENTO...</h1>
+        <div id="header-note">In attesa dei dati...</div>
     </div>
 
-    <main id="container">
-        </main>
-
-    <footer>
-        <div class="news-ticker">
-            +++ SERVIZIO CONTINUATO: INQUADRA IL QR CODE PER AVVIARE IL NAVIGATORE +++ SCOPRI I NOSTRI SERVIZI IN FARMACIA +++ PRENOTAZIONI CUP ATTIVE +++
-        </div>
-    </footer>
+    <div id="container-main">
+        <div class="titolo-sezione">FARMACIE DI TURNO / H24</div>
+        <div id="body-turni">
+            </div>
+    </div>
 
     <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv&t=' + new Date().getTime();
+        // Mappatura colonne basata sul tuo ultimo screenshot
+        const COL = {
+            ID: 0, NOME: 1, INDIRIZZO: 2, CAP: 3, LINK: 4, 
+            STAGIONE: 5, INIZIO_STAG: 6, FINE_STAG: 7,
+            LUN_VEN: 8, SABATO: 9, DOMENICA: 10, 
+            FERIE: 11, NOTE: 12, SERVIZIO: 13 // Colonna N
+        };
 
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('live-clock').innerText = now.toLocaleTimeString('it-IT');
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    async function fetchTurni() {
-        const container = document.getElementById('container');
-        try {
-            const response = await fetch(SHEET_URL);
-            const text = await response.text();
-            const rows = text.split(/\r?\n/);
+        async function aggiornaMonitor() {
+            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             
-            container.innerHTML = ''; 
-            
-            rows.forEach((row, index) => {
-                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (index === 0 || row.trim().length < 10) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            const mioID = urlParams.get('id'); // Legge ?id=RM001 dall'URL
 
-                if (cols.length >= 2) {
-                    const nome = cols[0].replace(/"/g, "").trim();
-                    const indirizzo = cols[1].replace(/"/g, "").trim();
-                    if (nome.toLowerCase().includes("nome")) return;
+            try {
+                const response = await fetch(csvUrl + "&cb=" + Date.now());
+                const csvText = await response.text();
+                const righe = csvText.split('\n').map(r => r.split(','));
 
-                    const mapsLink = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(nome + " " + indirizzo);
-                    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(mapsLink);
+                const container = document.getElementById('body-turni');
+                container.innerHTML = ''; // Svuota per aggiornare
+
+                righe.forEach((riga, index) => {
+                    // SALTA LE INTESTAZIONI (Saltiamo le prime 2 righe del foglio)
+                    if (index < 2) return;
+
+                    // Funzione interna per pulire i dati dalle virgolette del CSV
+                    const pulisci = (val) => val ? val.replace(/["']/g, "").trim() : "";
+
+                    const idFarma = pulisci(riga[COL.ID]);
+                    const nomeFarma = pulisci(riga[COL.NOME]);
+                    const tipoServizio = pulisci(riga[COL.SERVIZIO]);
+
+                    // Se la riga è vuota o è l'intestazione ripetuta, saltala
+                    if (!nomeFarma || nomeFarma === "NOME_FARMA") return;
+
+                    // 1. SE È LA MIA FARMACIA (Header)
+                    if (tipoServizio === "O" && idFarma === mioID) {
+                        document.body.style.backgroundColor = "#064e3b"; // Verde scuro professionale
+                        document.getElementById('header-nome').innerText = nomeFarma;
+                        document.getElementById('header-note').innerText = pulisci(riga[COL.NOTE]) || "Servizio Farmaceutico";
+                    } 
                     
-                    container.innerHTML += `
-                        <div class="farmacia-card">
-                            <div class="info">
-                                <h2>${nome}</h2>
-                                <p>${indirizzo}</p>
+                    // 2. SE È UN TURNO O UN'ALTRA FARMACIA (Body)
+                    // Mostriamo tutto ciò che ha "T" o ciò che è "O" ma non è il proprietario
+                    else if (tipoServizio === "T" || (tipoServizio === "O" && idFarma !== mioID)) {
+                        const cardHtml = `
+                            <div class="card">
+                                <div class="card-info">
+                                    <h3>${nomeFarma}</h3>
+                                    <p>${pulisci(riga[COL.INDIRIZZO])}</p>
+                                    <small style="color:#00ff88">${pulisci(riga[COL.LUN_VEN])}</small>
+                                </div>
+                                <a class="btn-mappa" href="${pulisci(riga[COL.LINK])}" target="_blank">MAPPA</a>
                             </div>
-                            <div class="qr-code">
-                                <img src="${qrUrl}" alt="QR">
-                                <span>MAPPA</span>
-                            </div>
-                        </div>`;
-                }
-            });
-        } catch (error) {
-            container.innerHTML = `<h1 style="text-align:center">Caricamento in corso...</h1>`;
-        }
-    }
-
-    fetchTurni();
-    setInterval(fetchTurni, 300000);
-    </script>
-</body>
-</html>
+                        `;
+                        container.innerHTML += cardHtml;
+                    }
+                });
