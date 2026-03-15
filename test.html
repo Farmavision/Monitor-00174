@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor Farmacia Test</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; transition: background 0.5s; }
+        #header { padding: 40px; color: white; text-align: center; }
+        #body-turni { padding: 20px; }
+        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: #333; }
+        .btn-mappa { display: inline-block; margin-top: 10px; color: #0066cc; font-weight: bold; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h1 id="header-nome">Caricamento...</h1>
+        <p id="header-note"></p>
+    </div>
+
+    <div id="body-turni">
+        </div>
+
+    <script>
+        // Mappatura colonne del tuo CSV
+        const COL = {
+            ID: 0, NOME: 1, INDIRIZZO: 2, CAP: 3, LINK: 4, 
+            STAGIONE: 5, INIZIO_STAG: 6, FINE_STAG: 7,
+            LUN_VEN: 8, SABATO: 9, DOMENICA: 10, 
+            FERIE: 11, NOTE: 12, SERVIZIO: 13 // Colonna N (O/T)
+        };
+
+        async function caricaDati() {
+            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const mioID = urlParams.get('id'); // Legge ?id=RM001
+
+            try {
+                const response = await fetch(csvUrl + "&cb=" + Date.now());
+                const data = await response.text();
+                const righe = data.split('\n').map(r => r.split(','));
+
+                const containerTurni = document.getElementById('body-turni');
+                containerTurni.innerHTML = '<h2 style="color:#444">Farmacie di Turno</h2>'; 
+
+                righe.forEach((riga, index) => {
+                    if (index < 2) return; // Salta intestazioni
+
+                    const tipoServizio = riga[COL.SERVIZIO]?.replace(/"/g, '').trim();
+                    const idFarmacia = riga[COL.ID]?.replace(/"/g, '').trim();
+
+                    // GESTIONE HEADER (Se riga 'O' e ID corrisponde)
+                    if (tipoServizio === 'O' && idFarmacia === mioID) {
+                        document.body.style.backgroundColor = "#008000"; // Sfondo Verde
+                        document.getElementById('header-nome').innerText = riga[COL.NOME].replace(/"/g, '');
+                        document.getElementById('header-note').innerText = riga[COL.NOTE].replace(/"/g, '');
+                    } 
+                    
+                    // GESTIONE BODY (Se riga 'T' - Questa è la parte del punto 2)
+                    else if (tipoServizio === 'T') {
+                        const card = `
+                            <div class="card">
+                                <strong>${riga[COL.NOME].replace(/"/g, '')}</strong><br>
+                                ${riga[COL.INDIRIZZO].replace(/"/g, '')}<br>
+                                <a class="btn-mappa" href="${riga[COL.LINK].replace(/"/g, '')}" target="_blank">📍 Apri Mappa</a>
+                            </div>
+                        `;
+                        containerTurni.innerHTML += card;
+                    }
+                });
+            } catch (e) {
+                console.error("Errore caricamento:", e);
+            }
+        }
+
+        caricaDati();
+    </script>
+</body>
+</html>

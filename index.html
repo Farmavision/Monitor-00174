@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor Farmavision</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; }
-        #header { padding: 30px; text-align: center; border-bottom: 2px solid #00ff88; }
-        #header-nome { font-size: 3em; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; }
+        #header { padding: 30px; text-align: center; border-bottom: 2px solid #00ff88; min-height: 150px; }
+        #header-nome { font-size: 3em; margin: 0; text-transform: uppercase; }
         #header-note { font-size: 1.2em; color: #00ff88; margin-top: 10px; }
         #container-main { padding: 20px; max-width: 1200px; margin: auto; }
         .titolo-sezione { border-left: 5px solid #00ff88; padding-left: 15px; margin: 30px 0 20px 0; font-size: 1.5em; color: #cbd5e1; }
         #body-turni { display: flex; flex-direction: column; gap: 15px; }
         .card { background: #172a45; padding: 20px; border-radius: 12px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; }
         .card-info h3 { margin: 0; color: #00ff88; font-size: 1.4em; }
-        .card-info p { margin: 5px 0; color: #8892b0; }
         .btn-mappa { background: #00ff88; color: #0a192f; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
     </style>
 </head>
@@ -22,68 +21,66 @@
 
     <div id="header">
         <h1 id="header-nome">CARICAMENTO...</h1>
-        <div id="header-note">In attesa dei dati...</div>
+        <div id="header-note">Verifica connessione al database...</div>
     </div>
 
     <div id="container-main">
         <div class="titolo-sezione">FARMACIE DI TURNO / H24</div>
-        <div id="body-turni">
-            </div>
+        <div id="body-turni"></div>
     </div>
 
     <script>
-        // Mappatura colonne basata sul tuo ultimo screenshot
+        // Mappatura Colonne dal tuo ultimo screenshot
         const COL = {
             ID: 0, NOME: 1, INDIRIZZO: 2, CAP: 3, LINK: 4, 
-            STAGIONE: 5, INIZIO_STAG: 6, FINE_STAG: 7,
-            LUN_VEN: 8, SABATO: 9, DOMENICA: 10, 
-            FERIE: 11, NOTE: 12, SERVIZIO: 13 // Colonna N
+            LUN_VEN: 8, NOTE: 12, SERVIZIO: 13 
         };
 
         async function aggiornaMonitor() {
+            // URL Pubblicato come CSV
             const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             
             const urlParams = new URLSearchParams(window.location.search);
-            const mioID = urlParams.get('id'); // Legge ?id=RM001 dall'URL
+            const mioID = urlParams.get('id'); 
 
             try {
-                const response = await fetch(csvUrl + "&cb=" + Date.now());
+                const response = await fetch(csvUrl + "&cachebuster=" + Date.now());
                 const csvText = await response.text();
-                const righe = csvText.split('\n').map(r => r.split(','));
+                
+                // Dividiamo le righe gestendo anche i ritorni a capo sporchi
+                const righe = csvText.split(/\r?\n/).map(r => r.split(','));
 
                 const container = document.getElementById('body-turni');
-                container.innerHTML = ''; // Svuota per aggiornare
+                container.innerHTML = ''; 
+
+                let trovatoMioHeader = false;
 
                 righe.forEach((riga, index) => {
-                    // SALTA LE INTESTAZIONI (Saltiamo le prime 2 righe del foglio)
-                    if (index < 2) return;
+                    if (index < 2) return; // Salta intestazioni
 
-                    // Funzione interna per pulire i dati dalle virgolette del CSV
                     const pulisci = (val) => val ? val.replace(/["']/g, "").trim() : "";
 
                     const idFarma = pulisci(riga[COL.ID]);
                     const nomeFarma = pulisci(riga[COL.NOME]);
                     const tipoServizio = pulisci(riga[COL.SERVIZIO]);
 
-                    // Se la riga è vuota o è l'intestazione ripetuta, saltala
-                    if (!nomeFarma || nomeFarma === "NOME_FARMA") return;
+                    if (!nomeFarma || nomeFarma === "NOME_FARMACIA") return;
 
-                    // 1. SE È LA MIA FARMACIA (Header)
+                    // 1. LOGICA HEADER (La mia farmacia)
                     if (tipoServizio === "O" && idFarma === mioID) {
-                        document.body.style.backgroundColor = "#064e3b"; // Verde scuro professionale
+                        trovatoMioHeader = true;
+                        document.body.style.backgroundColor = "#064e3b"; 
                         document.getElementById('header-nome').innerText = nomeFarma;
-                        document.getElementById('header-note').innerText = pulisci(riga[COL.NOTE]) || "Servizio Farmaceutico";
+                        document.getElementById('header-note').innerText = pulisci(riga[COL.NOTE]) || "SERVIZIO CONTINUATO";
                     } 
                     
-                    // 2. SE È UN TURNO O UN'ALTRA FARMACIA (Body)
-                    // Mostriamo tutto ciò che ha "T" o ciò che è "O" ma non è il proprietario
-                    else if (tipoServizio === "T" || (tipoServizio === "O" && idFarma !== mioID)) {
+                    // 2. LOGICA TURNI (Le altre farmacie 'T')
+                    else if (tipoServizio === "T") {
                         const cardHtml = `
                             <div class="card">
                                 <div class="card-info">
                                     <h3>${nomeFarma}</h3>
                                     <p>${pulisci(riga[COL.INDIRIZZO])}</p>
-                                    <small style="color:#00ff88">${pulisci(riga[COL.LUN_VEN])}</small>
                                 </div>
                                 <a class="btn-mappa" href="${pulisci(riga[COL.LINK])}" target="_blank">MAPPA</a>
                             </div>
@@ -91,3 +88,20 @@
                         container.innerHTML += cardHtml;
                     }
                 });
+
+                if(!trovatoMioHeader) {
+                    document.getElementById('header-nome').innerText = "ID NON TROVATO";
+                    document.getElementById('header-note').innerText = "Verifica che ?id=" + mioID + " sia corretto nel link.";
+                }
+
+            } catch (err) {
+                document.getElementById('header-nome').innerText = "ERRORE DATI";
+                console.error(err);
+            }
+        }
+
+        aggiornaMonitor();
+        setInterval(aggiornaMonitor, 60000);
+    </script>
+</body>
+</html>
