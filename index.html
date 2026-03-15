@@ -5,25 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor Farmavision</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; overflow-x: hidden; }
+        
+        /* Header & Orologio */
         #header { padding: 40px 20px; text-align: center; border-bottom: 3px solid #00ff88; position: relative; background: #172a45; }
         #clock { position: absolute; top: 15px; right: 20px; font-family: monospace; font-size: 1.5em; color: #00ff88; }
-        #header-nome { font-size: 3.5em; margin: 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; }
-        #header-note { font-size: 1.4em; color: #00ff88; margin-top: 15px; }
+        #header-nome { font-size: 3.2em; margin: 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; }
+        #header-note { font-size: 1.3em; color: #00ff88; margin-top: 15px; }
+        
+        /* Layout Card */
         #container-main { padding: 30px; max-width: 1100px; margin: auto; }
-        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 40px 0 25px 0; font-size: 1.8em; color: #8892b0; }
+        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 30px 0 25px 0; font-size: 1.8em; color: #8892b0; text-transform: uppercase; }
         #body-turni { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .card-info h3 { margin: 0; color: #00ff88; font-size: 1.6em; }
-        .card-info p { margin: 8px 0; color: #cbd5e1; }
-        .btn-mappa { color: #00ff88; border: 2px solid #00ff88; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; text-transform: uppercase; }
+        
+        .card { 
+            background: #172a45; 
+            padding: 20px; 
+            border-radius: 15px; 
+            border: 1px solid #233554; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+
+        .card-info { flex: 1; }
+        .card-info h3 { margin: 0; color: #00ff88; font-size: 1.8em; }
+        .card-info p { margin: 10px 0; color: #cbd5e1; font-size: 1.2em; }
+
+        /* QR Code Style */
+        .qr-container { text-align: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid #233554; margin-left: 20px; }
+        .qr-container img { width: 120px; height: 120px; display: block; }
+        .qr-label { font-size: 0.8em; color: #00ff88; font-weight: bold; margin-top: 5px; letter-spacing: 1px; }
+
+        @media (max-width: 600px) {
+            .card { flex-direction: column; text-align: center; }
+            .qr-container { margin: 20px 0 0 0; }
+        }
     </style>
 </head>
 <body>
     <div id="clock">00:00:00</div>
     <div id="header">
-        <h1 id="header-nome">CONNESSIONE...</h1>
-        <div id="header-note">Sincronizzazione con il database farmacie...</div>
+        <h1 id="header-nome">CARICAMENTO...</h1>
+        <div id="header-note">Sincronizzazione database...</div>
     </div>
     <div id="container-main">
         <div class="titolo-sezione">Farmacie di Turno Aperte</div>
@@ -31,77 +56,83 @@
     </div>
 
     <script>
-        // MAPPATURA PRECISA SU SCREENSHOT 20:09
-        const COL = { 
-            ID: 0,        // A: D_CLIENTE
-            NOME: 1,      // B: NOME_FARMACIA
-            INDIRIZZO: 2, // C: INDIRIZZO
-            LINK: 5,      // F: LINK
-            NOTE: 13,     // N: NOTE
-            SERVIZIO: 14  // O: SERVIZIO (O/T)
-        };
-
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('it-IT');
         }
         setInterval(updateClock, 1000);
+        updateClock();
+
+        function splitCSV(text) {
+            const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            return text.split(regex).map(val => val.replace(/^"|"$/g, '').trim());
+        }
 
         async function aggiornaMonitor() {
             const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             const urlParams = new URLSearchParams(window.location.search);
-            const mioID = urlParams.get('id')?.trim().toUpperCase(); 
+            const mioID = urlParams.get('id')?.toUpperCase();
 
             try {
-                const response = await fetch(csvUrl + "&cache=" + Date.now());
+                const response = await fetch(csvUrl + "&cb=" + Date.now());
                 const csvText = await response.text();
-                const righe = csvText.split(/\r?\n/).map(r => r.split(','));
-
+                const righe = csvText.split(/\r?\n/);
+                
+                let mapping = { id: 0, nome: 1, indirizzo: 2, link: 5, note: 13, servizio: 14 };
+                let trovatoProprietario = false;
                 const container = document.getElementById('body-turni');
-                container.innerHTML = ''; 
-                let trovato = false;
+                container.innerHTML = '';
 
-                righe.forEach((riga, index) => {
-                    // Salta le intestazioni (riga 1 e 2 del foglio)
-                    if (index < 2) return; 
+                righe.forEach((rigaRaw, index) => {
+                    const riga = splitCSV(rigaRaw);
+                    if (riga.includes("D_CLIENTE")) {
+                        mapping.id = riga.indexOf("D_CLIENTE");
+                        mapping.nome = riga.indexOf("NOME_FARMACIA");
+                        mapping.link = riga.indexOf("LINK");
+                        mapping.servizio = riga.indexOf("Servizio");
+                        return;
+                    }
+                    if (index < 2 || !riga[mapping.nome]) return;
 
-                    const pulisci = (val) => val ? val.replace(/["']/g, "").trim() : "";
+                    const idFarma = riga[mapping.id]?.toUpperCase();
+                    const tipoServizio = riga[mapping.servizio]?.toUpperCase();
+                    const googleMapsLink = riga[mapping.link] || "";
                     
-                    const idFarma = pulisci(riga[COL.ID]).toUpperCase();
-                    const nomeFarma = pulisci(riga[COL.NOME]);
-                    const tipoServizio = pulisci(riga[COL.SERVIZIO]).toUpperCase();
+                    // Genera QR Code (usando l'API gratuita qrserver)
+                    const qrUrl = googleMapsLink ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(googleMapsLink)}&bgcolor=172a45&color=00ff88` : "";
 
-                    if (!nomeFarma || nomeFarma.includes("NOME_FAR")) return;
-
-                    // 1. LOGICA HEADER (MIA FARMACIA)
                     if (tipoServizio === "O" && idFarma === mioID) {
-                        trovato = true;
-                        document.body.style.backgroundColor = "#064e3b"; 
-                        document.getElementById('header-nome').innerText = nomeFarma;
-                        document.getElementById('header-note').innerText = pulisci(riga[COL.NOTE]) || "SERVIZIO CONTINUATO";
+                        trovatoProprietario = true;
+                        document.body.style.backgroundColor = "#064e3b";
+                        document.getElementById('header-nome').innerText = riga[mapping.nome];
+                        document.getElementById('header-note').innerText = riga[mapping.note] || "SERVIZIO CONTINUATO";
                     } 
-                    
-                    // 2. LOGICA TURNI (LE ALTRE FARMACIE 'T')
                     else if (tipoServizio === "T") {
                         container.innerHTML += `
                             <div class="card">
                                 <div class="card-info">
-                                    <h3>${nomeFarma}</h3>
-                                    <p>${pulisci(riga[COL.INDIRIZZO])}</p>
+                                    <h3>${riga[mapping.nome]}</h3>
+                                    <p>${riga[mapping.indirizzo] || ''}</p>
                                 </div>
-                                <a class="btn-mappa" href="${pulisci(riga[COL.LINK])}" target="_blank">MAPPA</a>
+                                ${googleMapsLink ? `
+                                <div class="qr-container">
+                                    <img src="${qrUrl}" alt="QR Mappa">
+                                    <div class="qr-label">MAPPA</div>
+                                </div>` : ''}
                             </div>`;
                     }
                 });
 
-                if (!trovato && mioID) {
+                if (!trovatoProprietario && mioID) {
                     document.getElementById('header-nome').innerText = "ID NON TROVATO";
-                    document.getElementById('header-note').innerHTML = `L'ID <b>${mioID}</b> non è stato trovato come servizio 'O' nel foglio.`;
+                    document.getElementById('header-note').innerText = `L'ID ${mioID} non è di tipo 'O'.`;
                 }
+
             } catch (err) {
-                document.getElementById('header-nome').innerText = "ERRORE DATI";
+                document.getElementById('header-nome').innerText = "ERRORE CONNESSIONE";
             }
         }
+
         aggiornaMonitor();
         setInterval(aggiornaMonitor, 60000);
     </script>
