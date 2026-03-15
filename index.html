@@ -5,37 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor Farmavision</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; }
         #header { padding: 40px 20px; text-align: center; border-bottom: 3px solid #00ff88; position: relative; background: #172a45; }
         #clock { position: absolute; top: 15px; right: 20px; font-family: monospace; font-size: 1.5em; color: #00ff88; }
-        #header-nome { font-size: 3.5em; margin: 0; text-transform: uppercase; font-weight: 800; }
+        #header-nome { font-size: 3.5em; margin: 0; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; }
         #header-note { font-size: 1.4em; color: #00ff88; margin-top: 15px; }
         #container-main { padding: 30px; max-width: 1100px; margin: auto; }
         .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 40px 0 25px 0; font-size: 1.8em; color: #8892b0; }
         #body-turni { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .card-info h3 { margin: 0; color: #00ff88; font-size: 1.6em; }
-        .btn-mappa { color: #00ff88; border: 2px solid #00ff88; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .card-info p { margin: 8px 0; color: #cbd5e1; }
+        .btn-mappa { color: #00ff88; border: 2px solid #00ff88; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
     <div id="clock">00:00:00</div>
     <div id="header">
         <h1 id="header-nome">CONNESSIONE...</h1>
-        <div id="header-note">Caricamento dati in corso...</div>
+        <div id="header-note">Sincronizzazione con il database farmacie...</div>
     </div>
     <div id="container-main">
-        <div class="titolo-sezione">Farmacie di Turno / H24</div>
+        <div class="titolo-sezione">Farmacie di Turno Aperte</div>
         <div id="body-turni"></div>
     </div>
 
     <script>
-        // MAPPATURA AGGIORNATA SULLO SCREENSHOT 19:07
+        // MAPPATURA PRECISA SU SCREENSHOT 20:09
         const COL = { 
             ID: 0,        // A: D_CLIENTE
             NOME: 1,      // B: NOME_FARMACIA
             INDIRIZZO: 2, // C: INDIRIZZO
-            LINK: 5,      // F: LINK (Verifica che sia la colonna F nel CSV)
+            LINK: 5,      // F: LINK
             NOTE: 13,     // N: NOTE
             SERVIZIO: 14  // O: SERVIZIO (O/T)
         };
@@ -49,7 +50,7 @@
         async function aggiornaMonitor() {
             const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             const urlParams = new URLSearchParams(window.location.search);
-            const mioID = urlParams.get('id')?.trim(); 
+            const mioID = urlParams.get('id')?.trim().toUpperCase(); 
 
             try {
                 const response = await fetch(csvUrl + "&cache=" + Date.now());
@@ -61,23 +62,26 @@
                 let trovato = false;
 
                 righe.forEach((riga, index) => {
-                    if (index < 2) return; // Salta intestazioni
+                    // Salta le intestazioni (riga 1 e 2 del foglio)
+                    if (index < 2) return; 
 
                     const pulisci = (val) => val ? val.replace(/["']/g, "").trim() : "";
                     
-                    const idFarma = pulisci(riga[COL.ID]);
+                    const idFarma = pulisci(riga[COL.ID]).toUpperCase();
                     const nomeFarma = pulisci(riga[COL.NOME]);
-                    const tipoServizio = pulisci(riga[COL.SERVIZIO]);
+                    const tipoServizio = pulisci(riga[COL.SERVIZIO]).toUpperCase();
 
-                    if (!nomeFarma) return;
+                    if (!nomeFarma || nomeFarma.includes("NOME_FAR")) return;
 
-                    // CONFRONTO BLINDATO
-                    if (tipoServizio === "O" && idFarma.toUpperCase() === mioID?.toUpperCase()) {
+                    // 1. LOGICA HEADER (MIA FARMACIA)
+                    if (tipoServizio === "O" && idFarma === mioID) {
                         trovato = true;
                         document.body.style.backgroundColor = "#064e3b"; 
                         document.getElementById('header-nome').innerText = nomeFarma;
                         document.getElementById('header-note').innerText = pulisci(riga[COL.NOTE]) || "SERVIZIO CONTINUATO";
                     } 
+                    
+                    // 2. LOGICA TURNI (LE ALTRE FARMACIE 'T')
                     else if (tipoServizio === "T") {
                         container.innerHTML += `
                             <div class="card">
@@ -90,9 +94,9 @@
                     }
                 });
 
-                if (!trovato) {
+                if (!trovato && mioID) {
                     document.getElementById('header-nome').innerText = "ID NON TROVATO";
-                    document.getElementById('header-note').innerHTML = `L'ID <b>${mioID}</b> non corrisponde alla colonna A del foglio.`;
+                    document.getElementById('header-note').innerHTML = `L'ID <b>${mioID}</b> non è stato trovato come servizio 'O' nel foglio.`;
                 }
             } catch (err) {
                 document.getElementById('header-nome').innerText = "ERRORE DATI";
