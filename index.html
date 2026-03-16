@@ -3,43 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmavision 00174</title>
+    <title>Monitor Farmavision 00174 - Vertical Mode</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; overflow-x: hidden; }
-        #brand-top { text-align: center; padding: 15px 0 5px 0; font-size: 1.4em; font-weight: 900; letter-spacing: 5px; color: #ffffff; }
+        /* OTTIMIZZAZIONE VERTICALE 9:16 */
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #0a192f; 
+            color: white; 
+            overflow: hidden; /* Evita lo scroll se possibile per un monitor fisso */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #brand-top { text-align: center; padding: 20px 0 10px 0; font-size: 1.8em; font-weight: 900; letter-spacing: 8px; color: #ffffff; }
         #brand-top span { color: #00ff88; }
-        #header { padding: 10px 20px 40px 20px; text-align: center; border-bottom: 6px solid #00ff88; position: relative; transition: all 0.5s; min-height: 250px; }
-        #clock { position: absolute; top: 15px; right: 25px; font-family: monospace; font-size: 1.6em; color: #00ff88; font-weight: bold; }
+
+        #header { 
+            padding: 40px 20px; 
+            text-align: center; 
+            border-bottom: 10px solid #00ff88; 
+            position: relative; 
+            transition: all 0.5s; 
+            flex-shrink: 0; /* Impedisce all'header di rimpicciolirsi */
+        }
+
+        #clock { 
+            position: absolute; 
+            top: 20px; 
+            right: 30px; 
+            font-family: monospace; 
+            font-size: 2.2em; 
+            color: #00ff88; 
+            font-weight: bold; 
+        }
+
         .header-aperto { background: #064e3b !important; border-bottom-color: #00ff88 !important; }
         .header-chiuso { background: #ff0000 !important; border-bottom-color: #ffffff !important; }
-        #header-nome { font-size: 4.8em; margin: 15px 0; text-transform: uppercase; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 20px; }
-        .croce { color: #00ff88; font-size: 1.4em; animation: pulse 2s infinite; }
+
+        #header-nome { 
+            font-size: 6em; /* Molto grande per la lettura verticale */
+            margin: 30px 0; 
+            text-transform: uppercase; 
+            font-weight: 900; 
+            line-height: 1.1;
+            word-wrap: break-word;
+        }
+
+        .croce { color: #00ff88; font-size: 1.2em; animation: pulse 2s infinite; vertical-align: middle; }
         .header-chiuso .croce { color: white; }
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-        #header-orario { font-size: 1.6em; color: #ffffff; margin-top: 5px; font-weight: 800; text-transform: uppercase; }
-        #header-note { font-size: 1.4em; color: #00ff88; margin-top: 5px; font-weight: 600; font-style: italic; }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        #header-orario { font-size: 2.8em; color: #ffffff; margin-top: 20px; font-weight: 800; text-transform: uppercase; }
+        #header-note { font-size: 2em; color: #00ff88; margin-top: 15px; font-weight: 600; font-style: italic; }
         .header-chiuso #header-note { color: white; }
-        #container-main { padding: 30px; max-width: 1100px; margin: auto; }
-        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin-bottom: 25px; font-size: 1.3em; color: #8892b0; font-weight: bold; text-transform: uppercase; }
-        #body-turni { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; }
-        .card-info h3 { margin: 0; color: #00ff88; font-size: 2.2em; }
-        .card-info p { margin: 8px 0 0 0; color: #cbd5e1; font-size: 1.4em; }
-        .qr-container { text-align: center; background: white; padding: 10px; border-radius: 12px; margin-left: 25px; }
-        .qr-container img { width: 130px; height: 130px; display: block; }
-        .qr-label { font-size: 0.8em; color: #0a192f; font-weight: 900; margin-top: 5px; }
+
+        #container-main { 
+            padding: 40px 30px; 
+            flex-grow: 1; 
+            overflow-y: auto; /* Permette lo scorrimento se i turni sono molti */
+        }
+
+        .titolo-sezione { 
+            border-left: 10px solid #00ff88; 
+            padding-left: 25px; 
+            margin-bottom: 40px; 
+            font-size: 1.8em; 
+            color: #8892b0; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            line-height: 1.3;
+        }
+
+        #body-turni { display: flex; flex-direction: column; gap: 30px; }
+
+        /* Card ottimizzata per larghezza ridotta (Verticale) */
+        .card { 
+            background: #172a45; 
+            padding: 35px; 
+            border-radius: 20px; 
+            border: 2px solid #233554; 
+            display: flex; 
+            flex-direction: column; /* Gli elementi della card vanno uno sotto l'altro */
+            align-items: center; 
+            text-align: center;
+            gap: 20px;
+        }
+
+        .card-info h3 { margin: 0; color: #00ff88; font-size: 3em; }
+        .card-info p { margin: 15px 0 0 0; color: #cbd5e1; font-size: 1.8em; }
+
+        .qr-container { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            width: fit-content;
+        }
+        .qr-container img { width: 200px; height: 200px; display: block; }
+        .qr-label { font-size: 1.2em; color: #0a192f; font-weight: 900; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div id="header" class="header-aperto">
         <div id="brand-top">FARMA<span>VISION</span></div>
         <div id="clock">00:00:00</div>
-        <h1 id="header-nome"><span class="croce">&#10010;</span><span id="nome-farma">...</span><span class="croce">&#10010;</span></h1>
-        <div id="header-orario">VERIFICA ORARI...</div>
+        <h1 id="header-nome">
+            <span id="nome-farma">CARICAMENTO...</span>
+        </h1>
+        <div id="header-orario">VERIFICA IN CORSO...</div>
         <div id="header-note"></div>
     </div>
+
     <div id="container-main">
-        <div class="titolo-sezione">ELENCO DELLE FARMACIE DI TURNO CHE EFFETTUANO SERVIZIO ASSISTENZIALE H24</div>
+        <div class="titolo-sezione">FARMACIE DI TURNO H24 DI OGGI</div>
         <div id="body-turni"></div>
     </div>
 
@@ -47,36 +126,34 @@
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT'); }
         setInterval(updateClock, 1000);
 
-        function checkFerie(rangeStr) {
+        function checkRangeDate(rangeStr) {
             if (!rangeStr || rangeStr.trim() === "" || rangeStr.includes("APERTO")) return false;
-            const oggi = new Date(); oggi.setHours(0,0,0,0);
-            const parti = rangeStr.split('-');
-            if(parti.length !== 2) return false;
-            const [gI, mI] = parti[0].trim().split('/');
-            const [gF, mF] = parti[1].trim().split('/');
-            const inizio = new Date(oggi.getFullYear(), mI - 1, gI);
-            const fine = new Date(oggi.getFullYear(), mF - 1, gF);
-            return oggi >= inizio && oggi <= fine;
+            try {
+                const oggi = new Date(); oggi.setHours(0,0,0,0);
+                const parti = rangeStr.split('-');
+                if(parti.length !== 2) return false;
+                const [gI, mI] = parti[0].trim().split('/');
+                const [gF, mF] = parti[1].trim().split('/');
+                const inizio = new Date(oggi.getFullYear(), parseInt(mI) - 1, parseInt(gI));
+                const fine = new Date(oggi.getFullYear(), parseInt(mF) - 1, parseInt(gF));
+                return oggi >= inizio && oggi <= fine;
+            } catch(e) { return false; }
         }
 
         function analizzaOrario(str) {
             if (!str || str.toUpperCase().includes("CHIUSO")) return { aperto: false, riapre: "" };
             if (str.toUpperCase().includes("APERTO") || str.toUpperCase().includes("H24")) return { aperto: true, riapre: "" };
-            
             const ora = new Date();
             const minOra = ora.getHours() * 60 + ora.getMinutes();
             const blocchi = str.split(',');
             let riapertura = "";
             let attualmenteAperto = false;
-
             for (let b of blocchi) {
                 const p = b.trim().split('-');
                 if (p.length === 2) {
-                    const [hI, mI] = p[0].trim().split(':').map(Number);
-                    const [hF, mF] = p[1].trim().split(':').map(Number);
-                    const inizio = hI * 60 + mI;
-                    const fine = hF * 60 + mF;
-
+                    const tI = p[0].trim().split(':'); const tF = p[1].trim().split(':');
+                    const inizio = parseInt(tI[0]) * 60 + parseInt(tI[1]);
+                    const fine = parseInt(tF[0]) * 60 + parseInt(tF[1]);
                     if (minOra >= inizio && minOra <= fine) attualmenteAperto = true;
                     else if (inizio > minOra && riapertura === "") riapertura = p[0].trim();
                 }
@@ -87,34 +164,26 @@
         async function aggiorna() {
             const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             const mioID = new URLSearchParams(window.location.search).get('id')?.toUpperCase() || "RM001";
-
             try {
                 const res = await fetch(url + "&t=" + Date.now());
                 const txt = await res.text();
                 const righe = txt.split(/\r?\n/).map(l => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
-                
-                // Mappa Colonne Immagine 114911: H=7(Inizio), I=8(Fine), J=9(E-LV), K=10(E-S), L=11(E-D), M=12(I-LV), N=13(I-S), O=14(I-D), P=15(FERIE), Q=16(NOTE)
                 const MAP = { ID:0, NOME:1, ADDR:2, LINK:4, I_E:7, F_E:8, E_LV:9, E_S:10, E_D:11, I_LV:12, I_S:13, I_D:14, FER:15, NOTE:16, SERV:17 };
-                
                 const container = document.getElementById('body-turni');
                 container.innerHTML = '';
-                const oggi = new Date();
-                const day = oggi.getDay(); 
+                const oggi = new Date(); const day = oggi.getDay(); 
 
                 for (let i = 1; i < righe.length; i++) {
                     const r = righe[i];
                     if (!r[MAP.NOME]) continue;
-
                     if (r[MAP.ID].toUpperCase() === mioID && r[MAP.SERV] === "O") {
                         document.getElementById('nome-farma').innerText = r[MAP.NOME];
                         document.getElementById('header-note').innerText = r[MAP.NOTE] || "";
-
-                        const isEstate = checkFerie(`${r[MAP.I_E]}-${r[MAP.F_E]}`);
+                        const isEstate = checkRangeDate(`${r[MAP.I_E]}-${r[MAP.F_E]}`);
                         const orarioString = isEstate ? (day===0 ? r[MAP.E_D] : (day===6 ? r[MAP.E_S] : r[MAP.E_LV])) 
                                                        : (day===0 ? r[MAP.I_D] : (day===6 ? r[MAP.I_S] : r[MAP.I_LV]));
-
                         const stato = analizzaOrario(orarioString);
-                        const inFerie = checkFerie(r[MAP.FER]);
+                        const inFerie = checkRangeDate(r[MAP.FER]);
 
                         if (inFerie) {
                             document.getElementById('header').className = "header-chiuso";
@@ -127,14 +196,13 @@
                             document.getElementById('header-orario').innerText = "ORARIO DI APERTURA: " + orarioString;
                         }
                     } else if (r[MAP.SERV] === "T") {
-                        const qr = r[MAP.LINK] ? `<div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[MAP.LINK])}&bgcolor=ffffff"><div class="qr-label">MAPPA</div></div>` : "";
+                        const qr = r[MAP.LINK] ? `<div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(r[MAP.LINK])}&bgcolor=ffffff"><div class="qr-label">SCANSIONA PER MAPPA</div></div>` : "";
                         container.innerHTML += `<div class="card"><div class="card-info"><h3>${r[MAP.NOME]}</h3><p>${r[MAP.ADDR]}</p></div>${qr}</div>`;
                     }
                 }
             } catch (e) { console.error(e); }
         }
-        aggiorna();
-        setInterval(aggiorna, 30000);
+        aggiorna(); setInterval(aggiorna, 30000);
     </script>
 </body>
 </html>
