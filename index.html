@@ -1,32 +1,161 @@
-// Funzione per sbloccare l'orologio immediatamente
-function updateClock() { 
-    const ora = new Date();
-    document.getElementById('clock').innerText = ora.toLocaleTimeString('it-IT'); 
-}
-// Chiamata immediata per evitare lo 00:00:00
-updateClock(); 
-setInterval(updateClock, 1000);
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmavision Monitor 17</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: #0a192f; 
+            color: white; 
+            overflow: hidden; 
+            height: 100vh;
+            display: flex; flex-direction: column;
+        }
 
-// Logica di analisi oraria "corazzata" (non crasha se la cella è vuota)
-function isAperta(cella) {
-    if(!cella) return false;
-    try {
-        const adesso = new Date();
-        const minAttuali = adesso.getHours() * 60 + adesso.getMinutes();
-        // Se la cella contiene "H24" o "APERTO"
-        if(cella.toUpperCase().includes("H24")) return true;
+        /* HEADER (25%) */
+        #header { 
+            height: 25vh;
+            padding: 15px; 
+            text-align: center; 
+            border-bottom: 10px solid #00ff88; 
+            position: relative; 
+            display: flex; flex-direction: column; justify-content: center;
+            flex-shrink: 0;
+        }
+        #clock { position: absolute; top: 10px; right: 15px; font-family: monospace; font-size: 2rem; color: #00ff88; font-weight: bold; }
         
-        const fasce = cella.split(',');
-        for(let f of fasce) {
-            const ore = f.trim().split('-');
-            if(ore.length === 2) {
-                const inP = ore[0].split(':');
-                const fiP = ore[1].split(':');
-                const mIn = parseInt(inP[0])*60 + (parseInt(inP[1]) || 0);
-                const mFi = parseInt(fiP[0])*60 + (parseInt(fiP[1]) || 0);
-                if(minAttuali >= mIn && minAttuali <= mFi) return true;
+        .header-aperto { background: #064e3b !important; border-bottom-color: #00ff88 !important; }
+        .header-chiuso { background: #b91c1c !important; border-bottom-color: #ffffff !important; }
+
+        #header-nome { font-size: 3rem; margin: 5px 0; text-transform: uppercase; font-weight: 900; line-height: 1; }
+        #header-orario { font-size: 1.8rem; font-weight: 800; text-transform: uppercase; }
+
+        /* BODY (55%) */
+        #container-main { 
+            height: 55vh;
+            padding: 20px; 
+            overflow-y: auto; 
+            flex-grow: 1;
+            background: #0d1e36;
+        }
+        .titolo-sezione { border-left: 8px solid #00ff88; padding-left: 15px; margin-bottom: 20px; font-size: 1.3rem; color: #8892b0; font-weight: bold; text-transform: uppercase; }
+        
+        .card { background: #172a45; padding: 20px; border-radius: 20px; border: 2px solid #233554; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin-bottom: 20px; }
+        .card h3 { margin: 0; color: #00ff88; font-size: 2.2rem; }
+        .card p { margin: 5px 0; color: #cbd5e1; font-size: 1.5rem; }
+        .qr-container { background: white; padding: 10px; border-radius: 15px; }
+        .qr-container img { width: 150px; height: 150px; display: block; }
+
+        /* FOOTER (20%) */
+        #footer-promo {
+            height: 20vh;
+            background: white;
+            color: #b91c1c;
+            display: flex; align-items: center; justify-content: center;
+            border-top: 10px solid #00ff88;
+            flex-shrink: 0;
+        }
+        #promo-text { font-size: 3.5rem; font-weight: 900; text-transform: uppercase; text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="clock">--:--:--</div>
+        <h1 id="header-nome">CARICAMENTO...</h1>
+        <div id="header-orario">VERIFICA IN CORSO</div>
+    </div>
+
+    <div id="container-main">
+        <div class="titolo-sezione">ELENCO DELLE FARMACIE DI TURNO CHE EFFETTUANO SERVIZIO ASSISTENZIALE H24</div>
+        <div id="body-turni"></div>
+    </div>
+
+    <div id="footer-promo">
+        <div id="promo-text">OFFERTE IN CORSO</div>
+    </div>
+
+    <script>
+        // Fix orologio immediato
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        function checkOrario(cella) {
+            if (!cella || cella.toUpperCase().includes("CHIUSO")) return false;
+            if (cella.toUpperCase().includes("H24") || cella.toUpperCase().includes("APERTO")) return true;
+            try {
+                const adesso = new Date();
+                const min = adesso.getHours() * 60 + adesso.getMinutes();
+                const fasce = cella.split(',');
+                for (let f of fasce) {
+                    const ore = f.trim().split('-');
+                    if (ore.length === 2) {
+                        const inP = ore[0].split(':'); const fiP = ore[1].split(':');
+                        const mI = parseInt(inP[0])*60 + (parseInt(inP[1])||0);
+                        const mF = parseInt(fiP[0])*60 + (parseInt(fiP[1])||0);
+                        if (min >= mI && min <= mF) return true;
+                    }
+                }
+            } catch(e) { return false; }
+            return false;
+        }
+
+        async function caricaDati() {
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
+            const mioID = "RM001";
+            
+            try {
+                const res = await fetch(url + "&t=" + Date.now());
+                const csv = await res.text();
+                // Parsing sicuro del CSV
+                const righe = csv.split(/\r?\n/).map(line => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
+                
+                let turniHtml = "";
+                const giorno = new Date().getDay(); 
+
+                for (let i = 1; i < righe.length; i++) {
+                    const r = righe[i];
+                    if (!r[1]) continue;
+
+                    // Gestione Farmacia Principale
+                    if (r[0].toUpperCase() === mioID && r[17] === "O") {
+                        document.getElementById('header-nome').innerText = r[1];
+                        const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
+                        const aperta = checkOrario(orario);
+                        
+                        const h = document.getElementById('header');
+                        h.className = aperta ? "header-aperto" : "header-chiuso";
+                        document.getElementById('header-orario').innerText = aperta ? "APERTO: " + orario : "CHIUSO (ORARIO: " + orario + ")";
+                    } 
+                    // Gestione Farmacie di Turno
+                    else if (r[17] === "T") {
+                        const qr = r[4] ? `<div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
+                        turniHtml += `<div class="card"><h3>${r[1]}</h3><p>${r[2]}</p>${qr}</div>`;
+                    }
+                }
+                document.getElementById('body-turni').innerHTML = turniHtml;
+            } catch (e) {
+                console.error("Errore sync:", e);
+                document.getElementById('header-nome').innerText = "ERRORE CONNESSIONE";
             }
         }
-    } catch(e) { console.log("Errore cella:", cella); }
-    return false;
-}
+
+        // Rotazione promozioni nel footer
+        const promo = ["SCONTO 20% SOLARI", "PRESSIONE GRATUITA", "ECG E HOLTER"];
+        let pIdx = 0;
+        setInterval(() => {
+            document.getElementById('promo-text').innerText = promo[pIdx];
+            pIdx = (pIdx + 1) % promo.length;
+        }, 5000);
+
+        caricaDati();
+        setInterval(caricaDati, 45000);
+    </script>
+</body>
+</html>
