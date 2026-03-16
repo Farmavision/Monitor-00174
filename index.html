@@ -1,79 +1,74 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmavision 00174</title>
+    <title>Monitor Farmavision 00174 - Finale</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; overflow-x: hidden; }
         
-        /* Header & Orologio */
-        #header { padding: 40px 20px; text-align: center; border-bottom: 4px solid #00ff88; position: relative; background: #172a45; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        #brand-label { position: absolute; top: 15px; left: 20px; font-size: 1.2em; font-weight: 800; letter-spacing: 3px; color: #8892b0; }
+        #brand-label span { color: #00ff88; }
+
+        #header { padding: 60px 20px 30px 20px; text-align: center; border-bottom: 4px solid #00ff88; position: relative; background: #172a45; }
         #clock { position: absolute; top: 15px; right: 25px; font-family: monospace; font-size: 1.6em; color: #00ff88; font-weight: bold; }
-        #header-nome { font-size: 3.5em; margin: 0; text-transform: uppercase; font-weight: 900; letter-spacing: 2px; }
-        #header-note { font-size: 1.5em; color: #00ff88; margin-top: 10px; font-weight: 500; }
         
-        /* Container Principale */
-        #container-main { padding: 30px; max-width: 1100px; margin: auto; }
-        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 30px 0 25px 0; font-size: 1.8em; color: #8892b0; text-transform: uppercase; font-weight: bold; }
+        #header-nome { font-size: 3.5em; margin: 0; text-transform: uppercase; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .croce { color: #00ff88; font-size: 0.8em; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        /* Nuova riga Orario */
+        #header-orario { font-size: 1.8em; color: #ffffff; margin-top: 10px; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        #header-note { font-size: 1.3em; color: #00ff88; margin-top: 5px; font-weight: 500; font-style: italic; }
+        
+        #container-main { padding: 30px; max-width: 1150px; margin: auto; }
+        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 30px 0 25px 0; font-size: 1.4em; color: #8892b0; text-transform: uppercase; line-height: 1.4; }
+        
         #body-turni { display: flex; flex-direction: column; gap: 20px; }
         
-        /* Card Farmacie di Turno */
-        .card { 
-            background: #172a45; 
-            padding: 25px; 
-            border-radius: 15px; 
-            border: 1px solid #233554; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-        }
-        .card-info { flex: 1; }
+        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; }
         .card-info h3 { margin: 0; color: #00ff88; font-size: 2.2em; text-transform: uppercase; }
         .card-info p { margin: 10px 0 0 0; color: #cbd5e1; font-size: 1.4em; }
 
-        /* QR Code Style */
-        .qr-container { 
-            text-align: center; 
-            background: white; 
-            padding: 10px; 
-            border-radius: 12px; 
-            margin-left: 25px; 
-            min-width: 140px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
+        .qr-container { text-align: center; background: white; padding: 10px; border-radius: 12px; margin-left: 25px; min-width: 140px; }
         .qr-container img { width: 130px; height: 130px; display: block; }
-        .qr-label { font-size: 0.85em; color: #0a192f; font-weight: 900; margin-top: 6px; letter-spacing: 1px; }
+        .qr-label { font-size: 0.85em; color: #0a192f; font-weight: 900; margin-top: 6px; }
 
-        @media (max-width: 700px) {
-            .card { flex-direction: column; text-align: center; }
-            .qr-container { margin: 20px 0 0 0; }
+        @media (max-width: 800px) {
             #header-nome { font-size: 2.2em; }
+            #header-orario { font-size: 1.4em; }
         }
     </style>
 </head>
 <body>
+    <div id="brand-label">FARMA<span>VISION</span></div>
     <div id="clock">00:00:00</div>
+    
     <div id="header">
-        <h1 id="header-nome">CARICAMENTO...</h1>
-        <div id="header-note">Sincronizzazione database 00174</div>
+        <h1 id="header-nome">
+            <span class="croce">&#10010;</span>
+            <span id="nome-farma">CARICAMENTO...</span>
+            <span class="croce">&#10010;</span>
+        </h1>
+        <div id="header-orario">--:--</div>
+        <div id="header-note">...</div>
     </div>
+
     <div id="container-main">
-        <div class="titolo-sezione">Farmacie di Turno Aperte</div>
+        <div class="titolo-sezione">
+            Elenco delle farmacie di turno che prestano servizio assistenziale H24 nella giornata di oggi<br>
+            <small style="font-size: 0.6em; opacity: 0.8;">(Fonte: Ordine dei Farmacisti di Roma)</small>
+        </div>
         <div id="body-turni"></div>
     </div>
 
     <script>
-        // Funzione per l'orologio in alto a destra
         function updateClock() {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Funzione per gestire le virgole dentro le celle del CSV
         function safeSplitCSV(text) {
             const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
             return text.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
@@ -81,13 +76,11 @@
 
         async function aggiornaMonitor() {
             const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
-            
-            // Prende l'ID dall'URL (es: ?id=RM001), se manca usa RM001 di default
             const urlParams = new URLSearchParams(window.location.search);
             const mioID = urlParams.get('id')?.toUpperCase() || "RM001";
 
             try {
-                const response = await fetch(csvUrl + "&cachebuster=" + Date.now());
+                const response = await fetch(csvUrl + "&t=" + Date.now());
                 const csvText = await response.text();
                 const righe = csvText.split(/\r?\n/);
                 
@@ -95,9 +88,9 @@
                 container.innerHTML = '';
                 let trovatoOwner = false;
 
-                // MAPPATURA FISSA COLONNE TABELLA 00174
-                // A=0 (ID), B=1 (Nome), C=2 (Indirizzo), E=4 (LINK), N=13 (Note), O=14 (Servizio)
-                const MAP = { ID: 0, NOME: 1, ADDR: 2, LINK: 4, NOTE: 13, SERV: 14 };
+                // MAPPATURA AGGIORNATA TAB 00174
+                // J=9 (Orario Lun-Ven), N=13 (Note), O=14 (Servizio)
+                const MAP = { ID: 0, NOME: 1, ADDR: 2, LINK: 4, ORA: 9, NOTE: 13, SERV: 14 };
 
                 for (let i = 1; i < righe.length; i++) {
                     const riga = safeSplitCSV(righe[i]);
@@ -107,17 +100,15 @@
                     const servizio = riga[MAP.SERV].toUpperCase();
                     const nome = riga[MAP.NOME];
 
-                    // 1. GESTIONE FARMACIA PROPRIETARIA (O)
                     if (servizio === "O" && idFarma === mioID) {
                         trovatoOwner = true;
-                        document.body.style.backgroundColor = "#064e3b"; // Sfondo verde scuro per chi è aperto
-                        document.getElementById('header-nome').innerText = nome;
-                        document.getElementById('header-note').innerText = riga[MAP.NOTE] || "SERVIZIO CONTINUATO";
+                        document.body.style.backgroundColor = "#064e3b";
+                        document.getElementById('nome-farma').innerText = nome;
+                        document.getElementById('header-orario').innerText = "Orario oggi: " + (riga[MAP.ORA] || "Continuato");
+                        document.getElementById('header-note').innerText = riga[MAP.NOTE] || "";
                     } 
-                    // 2. GESTIONE TURNI ESTERNI (T)
                     else if (servizio === "T") {
                         const linkMaps = riga[MAP.LINK];
-                        // Genera QR Code bianco per massima leggibilità
                         const qrUrl = linkMaps ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(linkMaps)}&bgcolor=ffffff` : "";
                         
                         container.innerHTML += `
@@ -128,7 +119,7 @@
                                 </div>
                                 ${linkMaps ? `
                                 <div class="qr-container">
-                                    <img src="${qrUrl}" alt="QR Mappa">
+                                    <img src="${qrUrl}" alt="QR">
                                     <div class="qr-label">MAPPA</div>
                                 </div>` : ''}
                             </div>`;
@@ -136,16 +127,15 @@
                 }
 
                 if (!trovatoOwner) {
-                    document.getElementById('header-nome').innerText = "ID NON TROVATO";
-                    document.getElementById('header-note').innerText = "Verifica ?id=" + mioID + " nel link.";
+                    document.getElementById('nome-farma').innerText = "ID NON TROVATO";
+                    document.getElementById('header-orario').innerText = "";
                 }
 
             } catch (e) {
-                document.getElementById('header-nome').innerText = "ERRORE CONNESSIONE";
+                console.error(e);
             }
         }
 
-        // Avvio iniziale e aggiornamento ogni 60 secondi
         aggiornaMonitor();
         setInterval(aggiornaMonitor, 60000);
     </script>
