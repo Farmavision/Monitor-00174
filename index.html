@@ -7,75 +7,62 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; transition: background 0.5s; overflow-x: hidden; }
         
-        /* Branding Farmavision */
-        #brand-label { position: absolute; top: 15px; left: 20px; font-size: 1.2em; font-weight: 800; letter-spacing: 3px; color: #8892b0; }
-        #brand-label span { color: #00ff88; }
+        /* Brand Farmavision - Posizione Centrale Superiore */
+        #brand-header { text-align: center; padding-top: 15px; font-size: 1.5em; font-weight: 800; letter-spacing: 5px; color: #8892b0; }
+        #brand-header span { color: #00ff88; }
 
-        /* Header Istituzionale */
-        #header { padding: 60px 20px 30px 20px; text-align: center; border-bottom: 4px solid #00ff88; position: relative; background: #172a45; }
+        /* Header Dinamico */
+        #header { padding: 30px 20px 40px 20px; text-align: center; border-bottom: 5px solid #00ff88; position: relative; background: #172a45; transition: background 0.3s; }
         #clock { position: absolute; top: 15px; right: 25px; font-family: monospace; font-size: 1.6em; color: #00ff88; font-weight: bold; }
         
-        /* Farmacia Cliente con Croci */
-        #header-nome { font-size: 3.5em; margin: 0; text-transform: uppercase; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 20px; }
+        /* Stato Chiuso / Ferie */
+        .stato-allerta { background: #ff0000 !important; border-bottom-color: #ffffff !important; }
+        .stato-aperto { background: #064e3b !important; }
+
+        #header-nome { font-size: 3.5em; margin: 10px 0; text-transform: uppercase; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 20px; }
         .croce { color: #00ff88; font-size: 0.8em; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-        /* Orario e Note */
-        #header-orario { font-size: 2em; color: #ffffff; margin-top: 10px; font-weight: 700; }
+        #header-orario { font-size: 2em; color: #ffffff; margin-top: 5px; font-weight: 700; }
         #header-note { font-size: 1.4em; color: #00ff88; margin-top: 5px; font-weight: 500; font-style: italic; }
         
-        /* Sezione Turni */
         #container-main { padding: 30px; max-width: 1150px; margin: auto; }
-        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 30px 0 25px 0; font-size: 1.3em; color: #8892b0; text-transform: uppercase; line-height: 1.4; font-weight: bold; }
-        .fonte { font-size: 0.6em; display: block; margin-top: 5px; opacity: 0.7; font-weight: normal; }
+        .titolo-sezione { border-left: 6px solid #00ff88; padding-left: 20px; margin: 30px 0 25px 0; font-size: 1.3em; color: #8892b0; text-transform: uppercase; font-weight: bold; }
         
         #body-turni { display: flex; flex-direction: column; gap: 20px; }
-        
-        /* Card con QR Code */
-        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card { background: #172a45; padding: 25px; border-radius: 15px; border: 1px solid #233554; display: flex; justify-content: space-between; align-items: center; }
         .card-info h3 { margin: 0; color: #00ff88; font-size: 2.2em; text-transform: uppercase; }
         .card-info p { margin: 10px 0 0 0; color: #cbd5e1; font-size: 1.4em; }
 
         .qr-container { text-align: center; background: white; padding: 10px; border-radius: 12px; margin-left: 25px; min-width: 140px; }
         .qr-container img { width: 130px; height: 130px; display: block; }
-        .qr-label { font-size: 0.85em; color: #0a192f; font-weight: 900; margin-top: 6px; text-transform: uppercase; }
-
-        @media (max-width: 800px) {
-            #header-nome { font-size: 2em; gap: 10px; }
-            #header-orario { font-size: 1.3em; }
-            .card { flex-direction: column; text-align: center; }
-            .qr-container { margin: 20px 0 0 0; }
-        }
+        .qr-label { font-size: 0.85em; color: #0a192f; font-weight: 900; margin-top: 6px; }
     </style>
 </head>
 <body>
-    <div id="brand-label">FARMA<span>VISION</span></div>
-    <div id="clock">00:00:00</div>
-    
     <div id="header">
+        <div id="brand-header">FARMA<span>VISION</span></div>
+        <div id="clock">00:00:00</div>
         <h1 id="header-nome">
             <span class="croce">&#10010;</span>
-            <span id="nome-farma">CARICAMENTO...</span>
+            <span id="nome-farma">SINCRONIZZAZIONE...</span>
             <span class="croce">&#10010;</span>
         </h1>
-        <div id="header-orario">--:--</div>
-        <div id="header-note">...</div>
+        <div id="header-orario">Verifica orari in corso</div>
+        <div id="header-note"></div>
     </div>
 
     <div id="container-main">
         <div class="titolo-sezione">
-            ELENCO DELLE FARMACIE DI TURNO CHE PRESTANO SERVIZIO ASSISTENZIALE H24 NELLA GIORNATA DI OGGI
-            <span class="fonte">(FONTE: ORDINE DEI FARMACISTI DI ROMA)</span>
+            ELENCO DELLE FARMACIE DI TURNO H24 NELLA GIORNATA DI OGGI
+            <div style="font-size: 0.6em; font-weight: normal;">(FONTE: ORDINE DEI FARMACISTI DI ROMA)</div>
         </div>
         <div id="body-turni"></div>
     </div>
 
     <script>
-        function updateClock() {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
-        }
+        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT'); }
         setInterval(updateClock, 1000);
-        updateClock();
 
         function safeSplitCSV(text) {
             const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
@@ -91,58 +78,48 @@
                 const response = await fetch(csvUrl + "&t=" + Date.now());
                 const csvText = await response.text();
                 const righe = csvText.split(/\r?\n/);
-                
                 const container = document.getElementById('body-turni');
+                const header = document.getElementById('header');
                 container.innerHTML = '';
                 let trovatoOwner = false;
 
-                // Mappatura Tabella 00174: ID(A=0), Nome(B=1), Addr(C=2), Link(E=4), Orario(J=9), Note(N=13), Serv(O=14)
-                const MAP = { ID: 0, NOME: 1, ADDR: 2, LINK: 4, ORA: 9, NOTE: 13, SERV: 14 };
+                // Mappatura Tab 00174: ID(0), Nome(1), Link(4), Ora(9), Ferie(12), Note(13), Serv(14)
+                const MAP = { ID: 0, NOME: 1, ADDR: 2, LINK: 4, ORA: 9, FERIE: 12, NOTE: 13, SERV: 14 };
 
                 for (let i = 1; i < righe.length; i++) {
                     const riga = safeSplitCSV(righe[i]);
-                    if (!riga[MAP.NOME] || riga[MAP.NOME] === "NOME_FARMACIA") continue;
+                    if (!riga[MAP.NOME]) continue;
 
                     const idFarma = riga[MAP.ID].toUpperCase();
                     const servizio = riga[MAP.SERV].toUpperCase();
-                    const nome = riga[MAP.NOME];
+                    const inFerie = riga[MAP.FERIE] && riga[MAP.FERIE] !== "CHIUSO" && riga[MAP.FERIE] !== "";
 
-                    if (servizio === "O" && idFarma === mioID) {
+                    if (idFarma === mioID && servizio === "O") {
                         trovatoOwner = true;
-                        document.body.style.backgroundColor = "#064e3b";
-                        document.getElementById('nome-farma').innerText = nome;
-                        document.getElementById('header-orario').innerText = "Orario oggi: " + (riga[MAP.ORA] || "Consultare il personale");
-                        document.getElementById('header-note').innerText = riga[MAP.NOTE] || "";
+                        document.getElementById('nome-farma').innerText = riga[MAP.NOME];
+                        document.getElementById('header-orario').innerText = "Orario: " + riga[MAP.ORA];
+                        document.getElementById('header-note').innerText = riga[MAP.NOTE];
+                        
+                        // LOGICA COLORE HEADER
+                        if (riga[MAP.ORA].toUpperCase().includes("CHIUSO") || inFerie) {
+                            header.className = "stato-allerta";
+                            document.getElementById('header-orario').innerText = "ATTUALMENTE CHIUSA (FERIE/TURNO)";
+                        } else {
+                            header.className = "stato-aperto";
+                        }
                     } 
                     else if (servizio === "T") {
-                        const linkMaps = riga[MAP.LINK];
-                        const qrUrl = linkMaps ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(linkMaps)}&bgcolor=ffffff` : "";
-                        
+                        const link = riga[MAP.LINK];
+                        const qr = link ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link)}&bgcolor=ffffff` : "";
                         container.innerHTML += `
                             <div class="card">
-                                <div class="card-info">
-                                    <h3>${nome}</h3>
-                                    <p>${riga[MAP.ADDR] || ''}</p>
-                                </div>
-                                ${linkMaps ? `
-                                <div class="qr-container">
-                                    <img src="${qrUrl}" alt="QR">
-                                    <div class="qr-label">MAPPA</div>
-                                </div>` : ''}
+                                <div class="card-info"><h3>${riga[MAP.NOME]}</h3><p>${riga[MAP.ADDR]}</p></div>
+                                ${link ? `<div class="qr-container"><img src="${qr}"><div class="qr-label">MAPPA</div></div>` : ''}
                             </div>`;
                     }
                 }
-
-                if (!trovatoOwner) {
-                    document.getElementById('nome-farma').innerText = "ID NON TROVATO";
-                    document.getElementById('header-orario').innerText = "";
-                }
-
-            } catch (e) {
-                console.error("Errore nel caricamento dei dati:", e);
-            }
+            } catch (e) { console.error(e); }
         }
-
         aggiornaMonitor();
         setInterval(aggiornaMonitor, 60000);
     </script>
