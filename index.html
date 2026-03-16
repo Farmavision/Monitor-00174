@@ -39,7 +39,7 @@
         <div id="header-note"></div>
     </div>
     <div id="container-main">
-        <div class="titolo-sezione">ELENCO DELLE FARMACIE DI TURNO H24 NELLA GIORNATA DI OGGI</div>
+        <div class="titolo-sezione">ELENCO DELLE FARMACIE DI TURNO CHE EFFETTUANO SERVIZIO ASSISTENZIALE H24</div>
         <div id="body-turni"></div>
     </div>
 
@@ -124,7 +124,7 @@
                             document.getElementById('header-orario').innerText = "ATTUALMENTE CHIUSA" + (stato.riapre ? " - RIAPRE ALLE " + stato.riapre : "");
                         } else {
                             document.getElementById('header').className = "header-aperto";
-                            document.getElementById('header-orario').innerText = "ORARIO OGGI: " + orarioString;
+                            document.getElementById('header-orario').innerText = "ORARIO DI APERTURA: " + orarioString;
                         }
                     } else if (r[MAP.SERV] === "T") {
                         const qr = r[MAP.LINK] ? `<div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[MAP.LINK])}&bgcolor=ffffff"><div class="qr-label">MAPPA</div></div>` : "";
