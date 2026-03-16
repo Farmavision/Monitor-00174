@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmavision 00174 - Intelligent Version</title>
+    <title>Monitor Farmavision 00174 - Smart Logic</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #0a192f; color: white; overflow-x: hidden; }
         #brand-top { text-align: center; padding: 15px 0 5px 0; font-size: 1.4em; font-weight: 900; letter-spacing: 5px; color: #ffffff; }
@@ -34,15 +34,10 @@
     <div id="header" class="header-aperto">
         <div id="brand-top">FARMA<span>VISION</span></div>
         <div id="clock">00:00:00</div>
-        <h1 id="header-nome">
-            <span class="croce">&#10010;</span>
-            <span id="nome-farma">SINCRONIZZAZIONE...</span>
-            <span class="croce">&#10010;</span>
-        </h1>
-        <div id="header-orario">Verifica orari in corso...</div>
+        <h1 id="header-nome"><span class="croce">&#10010;</span><span id="nome-farma">...</span><span class="croce">&#10010;</span></h1>
+        <div id="header-orario">Analisi orari...</div>
         <div id="header-note"></div>
     </div>
-
     <div id="container-main">
         <div class="titolo-sezione">ELENCO DELLE FARMACIE DI TURNO H24 NELLA GIORNATA DI OGGI</div>
         <div id="body-turni"></div>
@@ -65,74 +60,36 @@
             } catch(e) { return false; }
         }
 
-        function isOraChiusura(stringaOrario) {
-            const s = stringaOrario.toUpperCase();
-            if (s.includes("CHIUSO")) return true;
-            if (s.includes("APERTO") || s.includes("H24")) return false;
+        function getStatoOrario(stringaOrario) {
+            const s = stringaOrario.toUpperCase().trim();
+            if (s.includes("CHIUSO")) return { chiuso: true, riapertura: "" };
+            if (s.includes("H24") || s === "APERTO") return { chiuso: false, riapertura: "" };
             
-            const oraAttuale = new Date().getHours() * 60 + new Date().getMinutes();
-            const ranges = stringaOrario.split(',');
-            
-            let apertoAdesso = false;
-            ranges.forEach(range => {
-                const parti = range.trim().split('-');
+            const oraAttuale = new Date();
+            const minAdesso = oraAttuale.getHours() * 60 + oraAttuale.getMinutes();
+            const ranges = s.split(',');
+            let riaperturaProssima = "";
+            let trovatoAperto = false;
+
+            for (let r of ranges) {
+                const parti = r.trim().split('-');
                 if (parti.length === 2) {
-                    const [hI, mI] = parti[0].split(':').map(Number);
-                    const [hF, mF] = parti[1].split(':').map(Number);
-                    if (oraAttuale >= (hI * 60 + mI) && oraAttuale <= (hF * 60 + mF)) apertoAdesso = true;
+                    const [hI, mI] = parti[0].trim().split(':').map(Number);
+                    const [hF, mF] = parti[1].trim().split(':').map(Number);
+                    const inizio = hI * 60 + mI;
+                    const fine = hF * 60 + mF;
+
+                    if (minAdesso >= inizio && minAdesso <= fine) {
+                        trovatoAperto = true;
+                        break;
+                    }
+                    if (inizio > minAdesso && riaperturaProssima === "") {
+                        riaperturaProssima = parti[0].trim();
+                    }
                 }
-            });
-            return !apertoAdesso;
+            }
+            return { chiuso: !trovatoAperto, riapertura: riaperturaProssima };
         }
 
         async function aggiornaMonitor() {
-            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
-            const mioID = new URLSearchParams(window.location.search).get('id')?.toUpperCase() || "RM001";
-
-            try {
-                const res = await fetch(csvUrl + "&t=" + Date.now());
-                const csvText = await res.text();
-                const righe = csvText.split(/\r?\n/).map(line => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
-                
-                // Mappa Colonne: H=7(Inizio E), I=8(Fine E), J=9(E-LV), K=10(E-S), L=11(E-D), M=12(I-LV), N=13(I-S), O=14(I-D), P=15(FERIE), Q=16(NOTE)
-                const MAP = { ID:0, NOME:1, ADDR:2, LINK:4, INIZIO_E:7, FINE_E:8, E_LV:9, E_S:10, E_D:11, I_LV:12, I_S:13, I_D:14, FERIE:15, NOTE:16, SERV:17 };
-                
-                const container = document.getElementById('body-turni');
-                container.innerHTML = '';
-                const oggi = new Date();
-                const giorno = oggi.getDay(); 
-
-                for (let i = 1; i < righe.length; i++) {
-                    const r = righe[i];
-                    if (!r[MAP.NOME]) continue;
-
-                    if (r[MAP.ID].toUpperCase() === mioID && r[MAP.SERV] === "O") {
-                        document.getElementById('nome-farma').innerText = r[MAP.NOME];
-                        document.getElementById('header-note').innerText = r[MAP.NOTE];
-
-                        const isEstate = checkRangeDate(`${r[MAP.INIZIO_E]}-${r[MAP.FINE_E]}`);
-                        let orarioOggi = isEstate ? (giorno===0 ? r[MAP.E_D] : (giorno===6 ? r[MAP.E_S] : r[MAP.E_LV])) 
-                                                  : (giorno===0 ? r[MAP.I_D] : (giorno===6 ? r[MAP.I_S] : r[MAP.I_LV]));
-
-                        if (checkRangeDate(r[MAP.FERIE])) {
-                            document.getElementById('header').className = "header-chiuso";
-                            document.getElementById('header-orario').innerText = "CHIUSO PER FERIE (" + r[MAP.FERIE] + ")";
-                        } else if (isOraChiusura(orarioOggi)) {
-                            document.getElementById('header').className = "header-chiuso";
-                            document.getElementById('header-orario').innerText = "ATTUALMENTE CHIUSA (ORARIO: " + orarioOggi + ")";
-                        } else {
-                            document.getElementById('header').className = "header-aperto";
-                            document.getElementById('header-orario').innerText = "ORARIO OGGI: " + orarioOggi;
-                        }
-                    } else if (r[MAP.SERV] === "T") {
-                        const qr = r[MAP.LINK] ? `<div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[MAP.LINK])}&bgcolor=ffffff"><div class="qr-label">MAPPA</div></div>` : "";
-                        container.innerHTML += `<div class="card"><div class="card-info"><h3>${r[MAP.NOME]}</h3><p>${r[MAP.ADDR]}</p></div>${qr}</div>`;
-                    }
-                }
-            } catch (e) { console.error("Errore aggiornamento:", e); }
-        }
-        aggiornaMonitor();
-        setInterval(aggiornaMonitor, 30000); // Aggiorna ogni 30 secondi per massima precisione
-    </script>
-</body>
-</html>
+            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMg
