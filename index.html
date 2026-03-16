@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmavision - Controllo Orario Rigido</title>
+    <title>Monitor Farmavision - Pro H24</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -13,10 +13,10 @@
             color: white; 
             overflow: hidden; 
             height: 100vh;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
+        /* HEADER (25vh) */
         #header { 
             height: 25vh;
             padding: 20px; 
@@ -25,55 +25,56 @@
             position: relative; 
             display: flex; flex-direction: column; justify-content: center;
             flex-shrink: 0;
-            transition: all 0.5s ease;
+            transition: background 0.5s ease;
         }
 
-        #clock { position: absolute; top: 15px; right: 25px; font-family: monospace; font-size: 2.2rem; color: #00ff88; font-weight: bold; }
+        #clock { position: absolute; top: 15px; right: 25px; font-family: monospace; font-size: 2rem; color: #00ff88; font-weight: bold; }
 
-        /* STATI COLORE */
         .header-aperto { background: #064e3b !important; border-bottom-color: #00ff88 !important; }
         .header-chiuso { background: #b91c1c !important; border-bottom-color: #ffffff !important; }
 
         #header-nome { 
-            font-size: 3.5rem; 
-            margin: 10px 0; 
+            font-size: 3.2rem; 
+            margin: 5px 0; 
             text-transform: uppercase; 
             font-weight: 900; 
-            display: flex; align-items: center; justify-content: center; gap: 20px;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
         }
         .croce { color: #00ff88; font-size: 0.9em; animation: pulse 2s infinite; }
         .header-chiuso .croce, .header-chiuso #clock { color: white !important; }
 
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        #header-orario { font-size: 2.2rem; font-weight: 800; text-transform: uppercase; }
-        #header-note { font-size: 1.5rem; color: #00ff88; margin-top: 5px; font-weight: 600; font-style: italic; }
-        .header-chiuso #header-note { color: white !important; }
+        #header-orario { font-size: 2rem; font-weight: 800; text-transform: uppercase; }
 
+        /* BODY (55vh) */
         #container-main { 
             height: 55vh;
-            padding: 30px; 
+            padding: 25px 30px; 
             overflow-y: auto; 
             flex-grow: 1;
         }
+
         .titolo-sezione { 
             border-left: 10px solid #00ff88; 
-            padding-left: 20px; 
-            margin-bottom: 30px; 
-            font-size: 1.6rem; 
+            padding-left: 15px; 
+            margin-bottom: 25px; 
+            font-size: 1.5rem; 
             color: #8892b0; 
             font-weight: bold; 
             text-transform: uppercase;
         }
-        .card { 
-            background: #172a45; padding: 25px; border-radius: 25px; border: 3px solid #233554; 
-            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px; margin-bottom: 30px;
-        }
-        .card h3 { margin: 0; color: #00ff88; font-size: 2.8rem; }
-        .card p { margin: 10px 0; color: #cbd5e1; font-size: 2rem; }
-        .qr-container { background: white; padding: 15px; border-radius: 20px; }
-        .qr-container img { width: 180px; height: 180px; display: block; }
 
+        .card { 
+            background: #172a45; padding: 25px; border-radius: 20px; border: 3px solid #233554; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 15px; margin-bottom: 25px;
+        }
+        .card h3 { margin: 0; color: #00ff88; font-size: 2.5rem; text-transform: uppercase; }
+        .card p { margin: 5px 0; color: #cbd5e1; font-size: 1.8rem; font-weight: 600; }
+        .qr-container { background: white; padding: 10px; border-radius: 15px; }
+        .qr-container img { width: 170px; height: 170px; display: block; }
+
+        /* FOOTER (20vh) */
         #footer-promo {
             height: 20vh;
             background: white;
@@ -81,16 +82,20 @@
             display: flex; align-items: center; justify-content: center;
             border-top: 10px solid #00ff88;
             flex-shrink: 0;
+            padding: 0 20px;
         }
-        #promo-text { font-size: 4rem; font-weight: 900; text-transform: uppercase; text-align: center; }
+        #promo-text { font-size: 3.8rem; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1; }
     </style>
 </head>
 <body>
-    <div id="header" class="header-aperto">
+    <div id="header">
         <div id="clock">00:00:00</div>
-        <h1 id="header-nome"><span class="croce">&#10010;</span><span id="nome-farma">...</span><span class="croce">&#10010;</span></h1>
-        <div id="header-orario">VERIFICA...</div>
-        <div id="header-note"></div>
+        <h1 id="header-nome">
+            <span class="croce">&#10010;</span>
+            <span id="nome-farma">SINCRONIZZAZIONE</span>
+            <span class="croce">&#10010;</span>
+        </h1>
+        <div id="header-orario">VERIFICA IN CORSO...</div>
     </div>
 
     <div id="container-main">
@@ -98,82 +103,34 @@
         <div id="body-turni"></div>
     </div>
 
-    <div id="footer-promo"><div id="promo-text">OFFERTE</div></div>
+    <div id="footer-promo">
+        <div id="promo-text">OFFERTE IN CORSO</div>
+    </div>
 
     <script>
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT'); }
         setInterval(updateClock, 1000);
 
-        function isFarmaciaAperta(orarioCella) {
-            if (!orarioCella || orarioCella.toUpperCase().includes("CHIUSO")) return false;
-            if (orarioCella.toUpperCase().includes("H24") || orarioCella.toUpperCase().includes("APERTO")) return true;
+        function controllaApertura(fasciaOraria) {
+            if (!fasciaOraria || fasciaOraria.toUpperCase().includes("CHIUSO")) return false;
+            if (fasciaOraria.toUpperCase().includes("H24") || fasciaOraria.toUpperCase().includes("APERTO")) return true;
 
             const oraAttuale = new Date();
-            const minAdesso = (oraAttuale.getHours() * 60) + oraAttuale.getMinutes();
+            const adessoMinuti = (oraAttuale.getHours() * 60) + oraAttuale.getMinutes();
             
-            // Pulisce la stringa e divide per virgola (es: "09:00-10:00, 15:00-19:00")
-            const fasce = orarioCella.split(',');
-            
-            for (let fascia of fasce) {
-                const tempi = fascia.trim().split('-');
-                if (tempi.length === 2) {
-                    const [hIn, mIn] = tempi[0].split(':').map(Number);
-                    const [hFi, mFi] = tempi[1].split(':').map(Number);
-                    
-                    const inizioMin = (hIn * 60) + (mIn || 0);
-                    const fineMin = (hFi * 60) + (mFi || 0);
-                    
-                    if (minAdesso >= inizioMin && minAdesso <= fineMin) return true;
+            const fasce = fasciaOraria.split(',');
+            for (let f of fasce) {
+                const p = f.trim().split('-');
+                if (p.length === 2) {
+                    const [hI, mI] = p[0].split(':').map(Number);
+                    const [hF, mF] = p[1].split(':').map(Number);
+                    const inizio = (hI * 60) + (mI || 0);
+                    const fine = (hF * 60) + (mF || 0);
+                    if (adessoMinuti >= inizio && adessoMinuti <= fine) return true;
                 }
             }
             return false;
         }
 
-        async function aggiorna() {
-            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
-            const mioID = new URLSearchParams(window.location.search).get('id')?.toUpperCase() || "RM001";
-            
-            try {
-                const res = await fetch(url + "&t=" + Date.now());
-                const txt = await res.text();
-                const righe = txt.split(/\r?\n/).map(l => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
-                
-                // Mappatura esatta
-                // LUN-VEN Standard è Colonna M (indice 12)
-                const MAP = { ID:0, NOME:1, ADDR:2, LINK:4, I_LV:12, I_S:13, I_D:14, NOTE:16, SERV:17 };
-                const giorno = new Date().getDay(); // 1=Lun, 6=Sab, 0=Dom
-                
-                let htmlTurni = "";
-                for (let i = 1; i < righe.length; i++) {
-                    const r = righe[i];
-                    if (!r[MAP.NOME]) continue;
-
-                    if (r[MAP.ID].toUpperCase() === mioID && r[MAP.SERV] === "O") {
-                        document.getElementById('nome-farma').innerText = r[MAP.NOME];
-                        document.getElementById('header-note').innerText = r[MAP.NOTE] || "";
-                        
-                        const orarioOggi = (giorno === 0) ? r[MAP.I_D] : (giorno === 6 ? r[MAP.I_S] : r[MAP.I_LV]);
-                        const aperta = isFarmaciaAperta(orarioOggi);
-                        
-                        const h = document.getElementById('header');
-                        if (aperta) {
-                            h.className = "header-aperto";
-                            document.getElementById('header-orario').innerText = "APERTO: " + orarioOggi;
-                        } else {
-                            h.className = "header-chiuso";
-                            document.getElementById('header-orario').innerText = "CHIUSO (Orario: " + orarioOggi + ")";
-                        }
-                    } else if (r[MAP.SERV] === "T") {
-                        const qr = r[MAP.LINK] ? `<div class="qr-container"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(r[MAP.LINK])}"></div>` : "";
-                        htmlTurni += `<div class="card"><h3>${r[MAP.NOME]}</h3><p>${r[MAP.ADDR]}</p>${qr}</div>`;
-                    }
-                }
-                document.getElementById('body-turni').innerHTML = htmlTurni;
-            } catch (e) { console.error(e); }
-        }
-
-        aggiorna();
-        setInterval(aggiorna, 30000);
-    </script>
-</body>
-</html>
+        async function fetchDati() {
+            const csvUrl = "https://docs.google.com/spreadsheets/d/
