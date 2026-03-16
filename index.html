@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmavision 17" Vertical</title>
+    <title>Monitor Farmavision 17" Verticale</title>
     <style>
         /* RESET E STRUTTURA VERTICALE */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,67 +15,71 @@
             display: flex; 
             flex-direction: column; 
             overflow: hidden;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* ALTEZZE OTTIMIZZATE PER 17" VERTICALE */
+        /* HEADER (22% dell'altezza) */
         #header { 
-            height: 22vh; /* Leggermente più basso per dare spazio ai turni */
+            height: 22vh;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             border-bottom: 8px solid #00ff88;
             position: relative;
             flex-shrink: 0;
+            transition: background 0.5s ease;
         }
+        #clock { position: absolute; top: 10px; right: 20px; font-size: 2rem; color: #00ff88; font-family: monospace; font-weight: bold; }
+        
+        #nome-farma { 
+            font-size: 3rem; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            width: 100%;
+        }
+
+        /* LE CROCI */
+        .croce { color: #00ff88; font-size: 1.1em; animation: pulse 2s infinite; }
+        .chiuso .croce, .chiuso #clock { color: white !important; }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        /* STATI COLORE */
+        .aperto { background: #064e3b; }
+        .chiuso { background: #b91c1c; border-bottom-color: white !important; }
+        #stato-orario { font-size: 1.8rem; margin-top: 10px; font-weight: bold; text-transform: uppercase; }
+
+        /* BODY (58% dell'altezza) */
         #container-main { 
-            height: 58vh; /* Spazio centrale per le card dei turni */
-            padding: 20px;
+            height: 58vh;
+            padding: 20px 30px;
             overflow-y: auto;
             flex-grow: 1;
         }
+        .titolo-sezione { border-left: 10px solid #00ff88; padding-left: 15px; margin-bottom: 25px; font-size: 1.4rem; color: #8892b0; font-weight: bold; text-transform: uppercase; }
+
+        /* CARD TURNI E QR */
+        .card { background: #172a45; margin-bottom: 30px; padding: 25px; border-radius: 20px; text-align: center; border: 3px solid #233554; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .card h3 { color: #00ff88; font-size: 2.4rem; text-transform: uppercase; line-height: 1.2; }
+        .card p { font-size: 1.8rem; color: #cbd5e1; font-weight: 600; }
+        .qr-box { background: white; padding: 12px; border-radius: 15px; margin-top: 5px; }
+        .qr-box img { width: 160px; height: 160px; display: block; }
+
+        /* FOOTER (20% dell'altezza) */
         #footer-promo { 
-            height: 20vh; /* Footer promozionale generoso */
+            height: 20vh;
             background: white; 
             color: #b91c1c; 
             display: flex; justify-content: center; align-items: center;
-            border-top: 6px solid #00ff88;
+            border-top: 8px solid #00ff88;
             flex-shrink: 0;
         }
-
-        /* ELEMENTI HEADER */
-        #clock { position: absolute; top: 10px; right: 15px; font-size: 1.8rem; color: #00ff88; font-family: monospace; }
-        #nome-farma { 
-            font-size: 2.8rem; 
-            font-weight: 900; 
-            text-transform: uppercase; 
-            display: flex; align-items: center; gap: 15px;
-            text-align: center;
-            line-height: 1.1;
-        }
-        #stato-orario { font-size: 1.6rem; margin-top: 10px; font-weight: bold; text-transform: uppercase; }
-
-        /* CROCI ANIMATE */
-        .croce { color: #00ff88; font-size: 1em; animation: pulse 2s infinite; }
-        .chiuso .croce { color: white !important; }
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-
-        /* COLORI STATO */
-        .aperto { background: #064e3b; }
-        .chiuso { background: #b91c1c; border-bottom-color: white !important; }
-
-        /* CARD TURNI */
-        .titolo-sezione { border-left: 8px solid #00ff88; padding-left: 15px; margin-bottom: 20px; font-size: 1.2rem; color: #8892b0; font-weight: bold; text-transform: uppercase; }
-        .card { background: #172a45; margin-bottom: 20px; padding: 25px; border-radius: 20px; text-align: center; border: 2px solid #233554; }
-        .card h3 { color: #00ff88; font-size: 2.2rem; margin-bottom: 8px; }
-        .card p { font-size: 1.5rem; color: #cbd5e1; font-weight: 600; }
-
-        /* FOOTER TEXT */
-        #promo-text { font-size: 3.2rem; font-weight: 900; text-transform: uppercase; text-align: center; padding: 0 10px; }
+        #promo-text { font-size: 4rem; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1; padding: 0 15px; }
     </style>
 </head>
 <body>
 
     <div id="header" class="aperto">
-        <div id="clock">--:--:--</div>
+        <div id="clock">00:00:00</div>
         <h1 id="nome-farma">
             <span class="croce">&#10010;</span>
             <span id="txt-nome">SINCRONIZZAZIONE</span>
@@ -94,22 +98,21 @@
     </div>
 
     <script>
-        // Orologio
+        // Orologio Indipendente
         function updateClock() {
-            const ora = new Date();
-            document.getElementById('clock').innerText = ora.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT');
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Controllo Orario
-        function checkOrario(cella) {
+        // Controllo Apertura Rigido
+        function isAperta(cella) {
             if (!cella) return false;
             const s = cella.toUpperCase();
             if (s.includes("H24") || s.includes("APERTO")) return true;
             try {
-                const adesso = new Date();
-                const min = adesso.getHours() * 60 + adesso.getMinutes();
+                const ora = new Date();
+                const adesso = ora.getHours() * 60 + ora.getMinutes();
                 const fasce = s.split(',');
                 for (let f of fasce) {
                     const parti = f.trim().split('-');
@@ -118,15 +121,14 @@
                         const end = parti[1].split(':');
                         const mStart = parseInt(start[0])*60 + (parseInt(start[1])||0);
                         const mEnd = parseInt(end[0])*60 + (parseInt(end[1])||0);
-                        if (min >= mStart && min <= mEnd) return true;
+                        if (adesso >= mStart && adesso <= mEnd) return true;
                     }
                 }
             } catch(e) { return false; }
             return false;
         }
 
-        // Fetch Dati
-        async function carica() {
+        async function caricaDati() {
             const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             try {
                 const res = await fetch(url + "&t=" + Date.now());
@@ -134,16 +136,17 @@
                 const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
                 
                 let turniHtml = "";
-                const giorno = new Date().getDay(); 
+                const giorno = new Date().getDay(); // 1=Lun, 0=Dom
 
                 for (let i = 1; i < righe.length; i++) {
                     const r = righe[i];
                     if (!r[1]) continue;
 
+                    // Farmacia Proprietaria
                     if (r[0] === "RM001" && r[17] === "O") {
                         document.getElementById('txt-nome').innerText = r[1];
                         const orarioOggi = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
-                        const aperta = checkOrario(orarioOggi);
+                        const aperta = isAperta(orarioOggi);
                         
                         const h = document.getElementById('header');
                         if (aperta) {
@@ -153,24 +156,27 @@
                             h.className = 'chiuso';
                             document.getElementById('stato-orario').innerText = "ATTUALMENTE CHIUSA";
                         }
-                    } else if (r[17] === "T") {
-                        turniHtml += `<div class="card"><h3>${r[1]}</h3><p>${r[2]}</p></div>`;
+                    } 
+                    // Farmacie di Turno
+                    else if (r[17] === "T") {
+                        const qr = r[4] ? `<div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
+                        turniHtml += `<div class="card"><h3>${r[1]}</h3><p>${r[2]}</p>${qr}</div>`;
                     }
                 }
                 document.getElementById('body-turni').innerHTML = turniHtml;
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Errore sincronizzazione:", e); }
         }
 
-        // Rotazione promozioni
-        const promo = ["PRESSIONE GRATUITA", "SCONTO 20% SOLARI", "ECG IMMEDIATO", "AUTOANALISI DEL SANGUE"];
+        // Rotazione Promozioni
+        const promo = ["PRESSIONE GRATUITA", "SCONTO 20% SOLARI", "CONTROLLO UDITO"];
         let pIdx = 0;
         setInterval(() => {
             document.getElementById('promo-text').innerText = promo[pIdx];
             pIdx = (pIdx + 1) % promo.length;
-        }, 6000);
+        }, 5000);
 
-        carica();
-        setInterval(carica, 45000);
+        caricaDati();
+        setInterval(caricaDati, 45000);
     </script>
 </body>
 </html>
