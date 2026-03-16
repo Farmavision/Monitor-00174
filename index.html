@@ -12,7 +12,7 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* ALTEZZE */
+        /* LAYOUT */
         #header { height: 20vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 8px solid #00ff88; position: relative; flex-shrink: 0; }
         #container-main { height: 55vh; padding: 20px; overflow-y: auto; flex-grow: 1; }
         #footer-promo { height: 25vh; background: white; color: #b91c1c; display: flex; justify-content: center; align-items: center; border-top: 8px solid #00ff88; flex-shrink: 0; }
@@ -27,60 +27,51 @@
         .chiuso { background: #b91c1c; }
         .chiuso .croce, .chiuso #clock { color: white !important; }
 
-        /* CARD: FIX POSIZIONE QR A DESTRA */
+        /* NUOVO: TITOLO SEZIONE TURNI */
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* CARD: TESTO SX, QR DX */
         .card { 
-            background: #172a45; 
-            margin-bottom: 25px; 
-            padding: 20px; 
-            border-radius: 20px; 
-            border: 2px solid #233554; 
-            display: flex;       /* Disposizione in riga */
-            align-items: center; /* Centra verticalmente */
-            text-align: left;    /* Forza testo a sinistra */
+            background: #172a45; margin-bottom: 25px; padding: 20px; 
+            border-radius: 20px; border: 2px solid #233554; 
+            display: flex; align-items: center; justify-content: space-between;
         }
-
-        .card-info { 
-            flex: 1;            /* Prende tutto lo spazio disponibile a sinistra */
-        }
-
+        .card-info { flex: 1; text-align: left; }
         .card h3 { color: #00ff88; font-size: 2.2rem; text-transform: uppercase; margin: 0; }
         .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin-top: 5px; }
 
-        .qr-wrapper { 
-            background: white; 
-            padding: 8px; 
-            border-radius: 12px; 
-            margin-left: auto;   /* SPINGE IL QR A DESTRA */
-            flex-shrink: 0;      /* Impedisce al QR di schiacciarsi */
-        }
-        .qr-wrapper img { width: 120px; height: 120px; display: block; }
+        .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
+        .qr-wrapper img { width: 130px; height: 130px; display: block; }
 
-        #promo-text { font-size: 4.2rem; font-weight: 900; text-transform: uppercase; text-align: center; }
+        #promo-text { font-size: 4.5rem; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1; }
     </style>
 </head>
 <body>
 
-    <div id="header" class="aperto">
-        <div id="clock">00:00:00</div>
+    <div id="header">
+        <div id="clock">--:--:--</div>
         <h1 id="nome-farma">
             <span class="croce">&#10010;</span>
-            <span id="txt-nome">CARICAMENTO...</span>
+            <span id="txt-nome">RICERCA ID...</span>
             <span class="croce">&#10010;</span>
         </h1>
-        <div id="stato-orario" style="font-size:1.6rem; font-weight:bold; margin-top:5px;">SINCRONIZZAZIONE</div>
+        <div id="stato-orario" style="font-size:1.6rem; font-weight:bold; margin-top:5px;">SINCRONIZZAZIONE IN CORSO</div>
     </div>
 
     <div id="container-main">
+        <h2 id="titolo-turni">FARMACIE DI TURNO H24</h2>
         <div id="body-turni"></div>
     </div>
 
-    <div id="footer-promo">
-        <div id="promo-text">OFFERTE</div>
-    </div>
+    <div id="footer-promo"><div id="promo-text">OFFERTE</div></div>
 
     <script>
+        // MODIFICA: LETTURA DINAMICA DELL'ID DALLA URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const MIO_ID = urlParams.get('id') || "RM001"; 
+
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT'); }
-        setInterval(updateClock, 1000); updateClock();
+        setInterval(updateClock, 1000);
 
         function isAperta(cella) {
             if (!cella) return false;
@@ -108,23 +99,25 @@
                 const res = await fetch(url + "&t=" + Date.now());
                 const txt = await res.text();
                 const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
-                let html = "";
+                
+                let turniHtml = "";
                 const giorno = new Date().getDay(); 
 
                 for (let i = 1; i < righe.length; i++) {
                     const r = righe[i];
                     if (!r[1]) continue;
 
-                    if (r[0] === "RM001" && r[17] === "O") {
+                    if (r[0] === MIO_ID && r[17] === "O") {
                         document.getElementById('txt-nome').innerText = r[1];
                         const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
                         const aperta = isAperta(orario);
-                        const h = document.getElementById('header');
-                        h.className = aperta ? 'aperto' : 'chiuso';
+                        document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
                         document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
-                    } else if (r[17] === "T") {
+                    } 
+                    
+                    else if (r[17] === "T") {
                         const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
-                        html += `
+                        turniHtml += `
                             <div class="card">
                                 <div class="card-info">
                                     <h3>${r[1]}</h3>
@@ -134,18 +127,23 @@
                             </div>`;
                     }
                 }
-                document.getElementById('body-turni').innerHTML = html;
+                document.getElementById('body-turni').innerHTML = turniHtml;
             } catch(e) { console.error(e); }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
             carica();
             setInterval(carica, 45000);
-            const promo = ["PRESSIONE GRATUITA", "SCONTO 20% SOLARI", "ECG IMMEDIATO"];
+            
+            const promo = ["SCONTO 20% SOLARI", "PRESSIONE GRATUITA", "ECG IMMEDIATO"];
             let pIdx = 0;
             setInterval(() => {
-                document.getElementById('promo-text').innerText = promo[pIdx];
-                pIdx = (pIdx + 1) % promo.length;
+                const promoEl = document.getElementById('promo-text');
+                if (promoEl) {
+                    promoEl.innerText = promo[pIdx];
+                    pIdx = (pIdx + 1) % promo.length;
+                }
             }, 5000);
         });
     </script>
