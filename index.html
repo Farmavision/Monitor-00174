@@ -1,95 +1,141 @@
-<script>
-    // Funzione per controllare le ferie (Colonna P / Indice 15)
-    function isFerie(rangeStr) {
-        if (!rangeStr || rangeStr.length < 5) return false;
-        try {
-            const oggi = new Date(); oggi.setHours(0,0,0,0);
-            const parti = rangeStr.split('-');
-            if(parti.length < 2) return false;
-            const [di, mi] = parti[0].trim().split('/'); 
-            const [df, mf] = parti[1].trim().split('/');
-            const inizio = new Date(oggi.getFullYear(), mi-1, di);
-            const fine = new Date(oggi.getFullYear(), mf-1, df);
-            return oggi >= inizio && oggi <= fine;
-        } catch(e) { return false; }
-    }
-
-    async function aggiorna() {
-        const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
-        const urlParams = new URLSearchParams(window.location.search);
-        const mioID = (urlParams.get('id') || "RM001").toUpperCase();
-
-        try {
-            const res = await fetch(url + "?t=" + Date.now());
-            const txt = await res.text();
-            // Parsing robusto delle righe CSV
-            const righe = txt.split(/\r?\n/).map(l => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
-            
-            // Mappatura precisa
-            const MAP = { ID:0, NOME:1, ADDR:2, LINK:4, L_V:9, SAB:10, DOM:11, FER:15, SERV:17 };
-            const container = document.getElementById('body-turni');
-            container.innerHTML = '';
-            const giorno = new Date().getDay(); // 0=Dom, 1=Lun...
-
-            righe.forEach((r, idx) => {
-                if (idx === 0 || !r[MAP.NOME]) return;
-
-                // Gestione Farmacia Principale (Header)
-                if (r[MAP.ID].toUpperCase() === mioID && r[MAP.SERV] === "O") {
-                    document.getElementById('header-nome').innerText = r[MAP.NOME];
-                    
-                    // Seleziona l'orario in base al giorno della settimana
-                    let orarioOggi = (giorno === 0) ? r[MAP.DOM] : (giorno === 6 ? r[MAP.SAB] : r[MAP.L_V]);
-                    
-                    // Controllo Ferie prioritario
-                    if (isFerie(r[MAP.FER])) {
-                        document.getElementById('header').className = "header-chiuso";
-                        document.getElementById('header-orario').innerText = "CHIUSO PER FERIE";
-                    } 
-                    // Controllo Chiusura
-                    else if (!orarioOggi || orarioOggi.toUpperCase().includes("CHIUSO")) {
-                        document.getElementById('header').className = "header-chiuso";
-                        document.getElementById('header-orario').innerText = "OGGI: CHIUSO";
-                    } 
-                    // Stato Aperto
-                    else {
-                        document.getElementById('header').className = "header-aperto";
-                        document.getElementById('header-orario').innerText = "OGGI: " + orarioOggi;
-                    }
-                } 
-                // Gestione Farmacie di Turno (Body)
-                else if (r[MAP.SERV] === "T") {
-                    const qr = r[MAP.LINK] ? `<div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(r[MAP.LINK])}"></div>` : "";
-                    container.innerHTML += `<div class="card"><h3>${r[MAP.NOME]}</h3><p>${r[MAP.ADDR]}</p>${qr}</div>`;
-                }
-            });
-        } catch(e) { 
-            console.error("Errore critico:", e);
-            document.getElementById('header-orario').innerText = "ERRORE DATI";
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Farmavision</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; padding: 0; 
+            background-color: #0a192f; 
+            color: white; 
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-    }
 
-    // Orologio semplificato HH:MM
-    function clock() { 
-        const d = new Date();
-        document.getElementById('clock').innerText = d.getHours() + ":" + String(d.getMinutes()).padStart(2, '0'); 
-    }
-    
-    setInterval(clock, 1000); 
-    clock();
-    aggiorna(); 
-    setInterval(aggiorna, 45000); // Aggiorna ogni 45 secondi
+        /* HEADER - 25% */
+        #header { 
+            height: 25vh; 
+            padding: 2vh;
+            text-align: center; 
+            border-bottom: 0.8vh solid #00ff88; 
+            display: flex; flex-direction: column; justify-content: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+        #clock { position: absolute; top: 2vh; right: 3vw; font-family: monospace; font-size: 3.5vw; color: #00ff88; font-weight: bold; }
+        #header-nome { font-size: 7vw; margin: 0; text-transform: uppercase; font-weight: 900; line-height: 1.1; }
+        #header-orario { font-size: 4vw; font-weight: 700; text-transform: uppercase; margin-top: 1vh; }
 
-    // Rotazione Promo Footer
-    const promo = ["SCONTO 30% SOLARI", "PROMO INTEGRATORI 1+1", "SCOPRI I NOSTRI SERVIZI", "PRESSIONE GRATIS"];
-    let pIdx = 0;
-    setInterval(() => { 
-        const el = document.getElementById('adv-content');
-        el.style.opacity = 0;
-        setTimeout(() => {
-            el.innerText = promo[pIdx];
-            el.style.opacity = 1;
+        .header-aperto { background: #064e3b; }
+        .header-chiuso { background: #b91c1c; }
+
+        /* BODY - 50% */
+        #container-main { 
+            height: 50vh; 
+            padding: 3vh 5vw; 
+            overflow-y: auto; 
+            background: #0d1e36;
+            box-sizing: border-box;
+        }
+        .card { 
+            background: #172a45; 
+            padding: 3vh; 
+            border-radius: 2vw; 
+            border: 0.3vw solid #233554; 
+            margin-bottom: 3vh;
+            text-align: center;
+        }
+        .card h3 { color: #00ff88; font-size: 5vw; margin: 0; text-transform: uppercase; }
+        .card p { color: #cbd5e1; font-size: 3.5vw; margin: 1vh 0; }
+        .qr img { width: 28vw; height: 28vw; background: white; padding: 1vw; border-radius: 1.5vw; margin-top: 1vh; }
+
+        /* FOOTER - 25% */
+        #footer-adv { 
+            height: 25vh; 
+            background: #ffffff; 
+            color: #b91c1c;
+            border-top: 0.8vh solid #00ff88;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center;
+            padding: 0 5vw;
+            box-sizing: border-box;
+        }
+        #adv-content { font-size: 8vw; font-weight: 900; text-transform: uppercase; line-height: 1.1; }
+    </style>
+</head>
+<body>
+
+    <div id="header" class="header-aperto">
+        <div id="clock">00:00</div>
+        <h1 id="header-nome">CARICAMENTO...</h1>
+        <div id="header-orario">ATTENDERE</div>
+    </div>
+
+    <div id="container-main">
+        <div id="body-turni"></div>
+    </div>
+
+    <div id="footer-adv">
+        <div id="adv-content">OFFERTE IN ARRIVO...</div>
+    </div>
+
+    <script>
+        async function aggiorna() {
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
+            const urlParams = new URLSearchParams(window.location.search);
+            const mioID = (urlParams.get('id') || "RM001").toUpperCase();
+
+            try {
+                const res = await fetch(url + "&t=" + Date.now());
+                const txt = await res.text();
+                if (!txt) return;
+
+                const righe = txt.split(/\r?\n/).map(l => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
+                
+                const MAP = { ID:0, NOME:1, ADDR:2, LINK:4, L_V:9, SAB:10, DOM:11, SERV:17 };
+                const container = document.getElementById('body-turni');
+                const giorno = new Date().getDay();
+                
+                let htmlTurni = "";
+
+                for (let i = 1; i < righe.length; i++) {
+                    const r = righe[i];
+                    if (!r[MAP.NOME]) continue;
+
+                    if (r[MAP.ID].toUpperCase() === mioID && r[MAP.SERV] === "O") {
+                        document.getElementById('header-nome').innerText = r[MAP.NOME];
+                        let orario = (giorno === 0) ? r[MAP.DOM] : (giorno === 6 ? r[MAP.SAB] : r[MAP.L_V]);
+                        document.getElementById('header-orario').innerText = "OGGI: " + (orario || "NON DISPONIBILE");
+                        document.getElementById('header').className = orario.toUpperCase().includes("CHIUSO") ? "header-chiuso" : "header-aperto";
+                    } else if (r[MAP.SERV] === "T") {
+                        const qr = r[MAP.LINK] ? `<div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(r[MAP.LINK])}"></div>` : "";
+                        htmlTurni += `<div class="card"><h3>${r[MAP.NOME]}</h3><p>${r[MAP.ADDR]}</p>${qr}</div>`;
+                    }
+                }
+                container.innerHTML = htmlTurni;
+            } catch (e) { console.error("Errore:", e); }
+        }
+
+        function clock() {
+            const d = new Date();
+            document.getElementById('clock').innerText = d.getHours() + ":" + String(d.getMinutes()).padStart(2, '0');
+        }
+
+        setInterval(clock, 1000);
+        clock();
+        aggiorna();
+        setInterval(aggiorna, 45000);
+
+        const promo = ["SCONTO 30% SOLARI", "PROMO INTEGRATORI 1+1", "ECG IN SEDE", "PRESSIONE GRATIS"];
+        let pIdx = 0;
+        setInterval(() => {
+            document.getElementById('adv-content').innerText = promo[pIdx];
             pIdx = (pIdx + 1) % promo.length;
-        }, 500);
-    }, 8000);
-</script>
+        }, 6000);
+    </script>
+</body>
+</html>
