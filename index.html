@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmavision</title>
+    <title>Monitor Farmavision - Standard Release</title>
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
@@ -16,63 +16,60 @@
             flex-direction: column;
         }
 
-        /* HEADER - 25% */
+        /* HEADER */
         #header { 
-            height: 25vh; 
-            padding: 2vh;
+            height: 20vh; 
+            padding: 20px;
             text-align: center; 
-            border-bottom: 0.8vh solid #00ff88; 
+            border-bottom: 5px solid #00ff88; 
             display: flex; flex-direction: column; justify-content: center;
-            box-sizing: border-box;
-            position: relative;
         }
-        #clock { position: absolute; top: 2vh; right: 3vw; font-family: monospace; font-size: 3.5vw; color: #00ff88; font-weight: bold; }
-        #header-nome { font-size: 7vw; margin: 0; text-transform: uppercase; font-weight: 900; line-height: 1.1; }
-        #header-orario { font-size: 4vw; font-weight: 700; text-transform: uppercase; margin-top: 1vh; }
+        #clock { position: absolute; top: 15px; right: 20px; font-family: monospace; font-size: 2.5rem; color: #00ff88; }
+        #header-nome { font-size: 3.5rem; margin: 0; text-transform: uppercase; font-weight: bold; }
+        #header-orario { font-size: 1.8rem; margin-top: 10px; }
 
         .header-aperto { background: #064e3b; }
         .header-chiuso { background: #b91c1c; }
 
-        /* BODY - 50% */
+        /* BODY */
         #container-main { 
-            height: 50vh; 
-            padding: 3vh 5vw; 
+            height: 60vh; 
+            padding: 30px; 
             overflow-y: auto; 
             background: #0d1e36;
-            box-sizing: border-box;
         }
         .card { 
             background: #172a45; 
-            padding: 3vh; 
-            border-radius: 2vw; 
-            border: 0.3vw solid #233554; 
-            margin-bottom: 3vh;
+            padding: 25px; 
+            border-radius: 15px; 
+            border: 1px solid #233554; 
+            margin-bottom: 25px;
             text-align: center;
         }
-        .card h3 { color: #00ff88; font-size: 5vw; margin: 0; text-transform: uppercase; }
-        .card p { color: #cbd5e1; font-size: 3.5vw; margin: 1vh 0; }
-        .qr img { width: 28vw; height: 28vw; background: white; padding: 1vw; border-radius: 1.5vw; margin-top: 1vh; }
+        .card h3 { color: #00ff88; font-size: 2.2rem; margin: 0 0 10px 0; }
+        .card p { color: #cbd5e1; font-size: 1.4rem; margin: 0 0 20px 0; }
+        .qr img { width: 180px; height: 180px; background: white; padding: 10px; border-radius: 10px; }
 
-        /* FOOTER - 25% */
+        /* FOOTER */
         #footer-adv { 
-            height: 25vh; 
+            height: 20vh; 
             background: #ffffff; 
             color: #b91c1c;
-            border-top: 0.8vh solid #00ff88;
+            border-top: 5px solid #00ff88;
             display: flex; align-items: center; justify-content: center;
-            text-align: center;
-            padding: 0 5vw;
-            box-sizing: border-box;
         }
-        #adv-content { font-size: 8vw; font-weight: 900; text-transform: uppercase; line-height: 1.1; }
+        #adv-content { font-size: 3.5rem; font-weight: 900; text-align: center; text-transform: uppercase; }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-thumb { background: #233554; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div id="header" class="header-aperto">
         <div id="clock">00:00</div>
-        <h1 id="header-nome">CARICAMENTO...</h1>
-        <div id="header-orario">ATTENDERE</div>
+        <h1 id="header-nome">CARICAMENTO</h1>
+        <div id="header-orario">...</div>
     </div>
 
     <div id="container-main">
@@ -92,14 +89,11 @@
             try {
                 const res = await fetch(url + "&t=" + Date.now());
                 const txt = await res.text();
-                if (!txt) return;
-
                 const righe = txt.split(/\r?\n/).map(l => l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
                 
                 const MAP = { ID:0, NOME:1, ADDR:2, LINK:4, L_V:9, SAB:10, DOM:11, SERV:17 };
                 const container = document.getElementById('body-turni');
                 const giorno = new Date().getDay();
-                
                 let htmlTurni = "";
 
                 for (let i = 1; i < righe.length; i++) {
@@ -117,18 +111,20 @@
                     }
                 }
                 container.innerHTML = htmlTurni;
-            } catch (e) { console.error("Errore:", e); }
+            } catch (e) { console.error(e); }
         }
 
-        function clock() {
+        function updateClock() {
             const d = new Date();
             document.getElementById('clock').innerText = d.getHours() + ":" + String(d.getMinutes()).padStart(2, '0');
+            // Reset automatico alle 04:00
+            if(d.getHours() === 4 && d.getMinutes() === 0) location.reload();
         }
 
-        setInterval(clock, 1000);
-        clock();
+        setInterval(updateClock, 1000);
+        updateClock();
         aggiorna();
-        setInterval(aggiorna, 45000);
+        setInterval(aggiorna, 60000);
 
         const promo = ["SCONTO 30% SOLARI", "PROMO INTEGRATORI 1+1", "ECG IN SEDE", "PRESSIONE GRATIS"];
         let pIdx = 0;
