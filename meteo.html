@@ -1,90 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meteo e News Farmacia</title>
     <style>
-        body, html { 
-            margin: 0; padding: 0; 
-            height: 100%; width: 100%; 
-            overflow: hidden; 
-            background-color: white; /* Lo sfondo bianco aiuta a mimetizzarsi */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background-color: #000; 
+            color: white; 
+            height: 100vh; 
+            width: 100vw; 
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .weather-crop {
+        /* --- CONTENITORE METEO --- */
+        #weather-container {
+            flex: 1; /* Prende tutto lo spazio sopra la barra news */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 6vh; /* Spazio per non sovrapporsi alle news */
+        }
+
+        /* Widget Meteo Esterno (Esempio con scritte grandi) */
+        #weather-widget {
+            width: 90%;
+            height: 70%;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #1e293b;
+        }
+
+        /* --- BANDA NEWS DINAMICA --- */
+        #news-ticker {
+            position: fixed;
+            bottom: 0;
+            left: 0;
             width: 100%;
-            height: 100vh; /* Usa tutta l'altezza disponibile del footer */
+            height: 7vh; /* Altezza ottimale per la leggibilità */
+            background: linear-gradient(to right, #0a192f, #000);
             display: flex;
             align-items: center;
-            justify-content: center;
             overflow: hidden;
-            position: relative;
+            border-top: 3px solid #00ff88;
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
+            z-index: 1000;
         }
 
-        iframe {
-            /* Dimensioni originali del widget prima dello zoom */
-            width: 500px; 
-            height: 200px;
-            border: none;
-            
-            /* REGOLAZIONI: */
-            /* 1. Lo zoom: aumentalo o diminuirlo se è troppo grande/piccolo */
-            transform: scale(1.8); 
-            
-            /* 2. Lo spostamento: se vedi il widget tagliato in alto o in basso, 
-               cambia il secondo valore (es. -10px o +10px) */
-            transform-origin: center center;
-            margin-top: -30px; 
-            
-            pointer-events: none;
+        .ticker-wrapper {
+            display: inline-flex;
+            white-space: nowrap;
+            padding-left: 100%; /* Inizia fuori schermo */
+            animation: marquee 50s linear infinite;
         }
-        /* --- BANDA NEWS DINAMICA --- */
-#news-ticker {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 5vh; /* Altezza della banda */
-    background: rgba(0, 0, 0, 0.8); /* Sfondo scuro semitrasparente */
-    color: #00ff88; /* Verde farmacia per il testo */
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    border-top: 2px solid #00ff88;
-    font-family: 'Segoe UI', sans-serif;
-    font-weight: 700;
-    z-index: 999;
-}
 
-.ticker-content {
-    display: inline-block;
-    white-space: nowrap;
-    padding-left: 100%;
-    animation: scroll-news 30s linear infinite; /* Velocità dello scorrimento */
-    font-size: 1.5rem;
-}
+        .news-item {
+            font-size: 2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 0 60px;
+            display: flex;
+            align-items: center;
+            color: #ffffff;
+        }
 
-@keyframes scroll-news {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
-}
+        /* Separatore tra le notizie */
+        .news-item::after {
+            content: "✚"; /* Croce farmaceutica come separatore */
+            margin-left: 60px;
+            color: #00ff88;
+            font-size: 1.5rem;
+            animation: pulse-green 2s infinite;
+        }
 
-/* Modifica al widget meteo per non essere coperto */
-#weather-widget {
-    height: 95vh; /* Riduciamo leggermente l'altezza per far spazio alla banda */
-}
-    </style>
-</head>
-<body>
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
 
-    <div class="weather-crop">
-        <iframe src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=1&days=3&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=bright"  
-                frameborder="0" scrolling="no" allowtransparency="true"></iframe>
-    </div>
-<div id="news-ticker">
-    <div class="ticker-content" id="news-text">
-        +++ INFO FARMACIA: Ricordiamo ai gentili clienti che è attivo il servizio di prenotazione tramite WhatsApp +++ 
-        ORARIO CONTINUATO DALLE 08:30 ALLE 20:00 +++ SCOPRI LE NOSTRE OFFERTE NEL REPARTO DERMOCOSMESI +++
-    </div>
-</div>
-</body>
-</html>
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Overlay per sfumatura ai lati della barra news */
+        #news-ticker::before, #news-ticker::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 100px;
+            height: 100%;
+            z-index: 2;
+        }
+        #news-ticker::
