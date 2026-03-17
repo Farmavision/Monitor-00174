@@ -12,9 +12,41 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* LAYOUT */
-        #header { height: 20vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 8px solid #00ff88; position: relative; flex-shrink: 0; }
-        #container-main { height: 55vh; padding: 20px; overflow-y: auto; flex-grow: 1; }
+        /* --- STILI HEADER RIGHE 1 e 2 --- */
+
+#header { 
+    height: 25vh; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    border-bottom: 8px solid #00ff88; 
+    flex-shrink: 0;
+    padding: 20px 0;
+}
+
+/* 1a RIGA: La scritta "FARMACIA" (Copia esatta dello stile card) */
+.label-static { 
+    font-size: 1.1rem; 
+    color: #94a3b8; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    margin-bottom: 5px;
+}
+
+/* 2a RIGA: Il Nome Owner (Imponente e Chiaro) */
+#txt-nome { 
+    font-size: 4rem; /* Dimensione massimizzata per la vetrina */
+    font-weight: 900; 
+    color: #00ff88; 
+    text-transform: uppercase; 
+    line-height: 1;
+    margin-bottom: 10px;
+    text-align: center;
+    /* Effetto opzionale per dare profondità */
+    text-shadow: 3px 3px 0px rgba(0,0,0,0.2); 
+}
         
       /* FOOTER DINAMICO: Contenitore e Iframe */
         #footer-promo {
