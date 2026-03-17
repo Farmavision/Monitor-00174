@@ -12,120 +12,90 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* --- STILI HEADER RIGHE 1 e 2 --- */
-
-#header { 
-    height: 20vh; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    align-items: center; 
-    border-bottom: 8px solid #00ff88; 
-    flex-shrink: 0;
-    padding: 20px 0;
-}
-
-/* 1a RIGA: La scritta "FARMACIA" (Copia esatta dello stile card) */
-.label-static { 
-    font-size: 1.1rem; 
-    color: #94a3b8; 
-    font-weight: 800; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-    margin-bottom: 5px;
-}
-
-/* 2a RIGA: Il Nome Owner (Imponente e Chiaro) */
-#txt-nome { 
-    font-size: 4rem; /* Dimensione massimizzata per la vetrina */
-    font-weight: 900; 
-    color: #00ff88; 
-    text-transform: uppercase; 
-    line-height: 1;
-    margin-bottom: 10px;
-    text-align: center;
-    /* Effetto opzionale per dare profondità */
-    text-shadow: 3px 3px 0px rgba(0,0,0,0.2); 
-}
+        /* --- LAYOUT 25/50/25 --- */
         
-      /* FOOTER DINAMICO: Contenitore e Iframe */
+        #header { 
+            height: 25vh; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            border-bottom: 8px solid #00ff88; flex-shrink: 0; position: relative;
+            padding: 10px 0;
+        }
+
+        #container-main { 
+            height: 50vh; 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex-grow: 1; 
+        }
+
         #footer-promo {
-            height: 25vh; /* Assegna esattamente il 25% dello schermo */
+            height: 25vh; 
             width: 100%;
-            background-color: white; /* Sfondo bianco per far risaltare il meteo, puoi cambiarlo! */
-            flex-shrink: 0; /* Impedisce al contenitore centrale di schiacciarlo */
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: white; 
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
 
-        #footer-promo iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
-
-        #promo-text-fallback { 
-            font-size: 3rem; 
-            font-weight: 900; 
-            color: #b91c1c; 
-            text-transform: uppercase; 
-            text-align: center;
-        }
-
-        /* HEADER & CROCI */
+        /* --- STILI HEADER (4 RIGHE) --- */
         #clock { position: absolute; top: 10px; right: 20px; font-size: 1.8rem; color: #00ff88; font-family: monospace; }
-        #nome-farma { font-size: 2.8rem; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 20px; }
-        .croce { color: #00ff88; font-size: 1.1em; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
         
+        .label-static { 
+            font-size: 1.1rem; color: #94a3b8; font-weight: 800; 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;
+        }
+
+        #txt-nome { 
+            font-size: 3.8rem; font-weight: 900; color: #00ff88; 
+            text-transform: uppercase; line-height: 1; margin-bottom: 5px;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+        }
+
+        #stato-testo { font-size: 1.4rem; font-weight: 800; text-transform: uppercase; }
+        #orario-dettaglio { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin-top: 2px; }
+
+        /* Stati Colore */
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; }
-        .chiuso .croce, .chiuso #clock { color: white !important; }
+        .testo-aperto { color: #00ff88 !important; }
+        .testo-chiuso { color: #ffffff !important; }
 
-        /* TITOLO SEZIONE TURNI */
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-
-        /* CARD: STRUTTURA A 3 RIGHE */
+        /* --- CARD & TITOLI --- */
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.8rem; margin-bottom: 20px; text-transform: uppercase; }
+        
         .card { 
             background: #172a45; margin-bottom: 25px; padding: 20px; 
             border-radius: 20px; border: 2px solid #233554; 
             display: flex; align-items: center; justify-content: space-between;
         }
-        .card-info { 
-            flex: 1; text-align: left; display: flex; flex-direction: column; gap: 4px; 
-        }
-        .label-fisso { font-size: 1.1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; line-height: 1; }
-        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin: 0; text-transform: lowercase; }
-        .card p::first-letter { text-transform: uppercase; }
+        .card-info { flex: 1; text-align: left; display: flex; flex-direction: column; gap: 4px; }
+        .label-fisso { font-size: 1.1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
+        .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; }
+        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin: 0; }
 
         .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
-        .qr-wrapper img { width: 130px; height: 130px; display: block; }
+        .qr-wrapper img { width: 120px; height: 120px; display: block; }
+
+        #footer-promo iframe { width: 100%; height: 100%; border: none; display: block; }
+        #promo-text-fallback { font-size: 2.5rem; font-weight: 900; color: #b91c1c; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="header">
-    <div id="clock">--:--:--</div>
-    
-    <div class="label-static">FARMACIA</div>
-    
-    <h1 id="txt-nome">RICERCA...</h1>
-    
-    <div id="stato-testo" style="font-size:1.4rem; font-weight:800;"></div>
-    <div id="orario-dettaglio" style="font-size:1.6rem; color:#cbd5e1;"></div>
-</div>
+        <div id="clock">--:--:--</div>
+        <div class="label-static">FARMACIA</div>
+        <div id="txt-nome">CARICAMENTO...</div>
+        <div id="stato-testo">---</div>
+        <div id="orario-dettaglio">---</div>
+    </div>
 
     <div id="container-main">
-        <h2 id="titolo-turni">FARMACIE DI TURNO CHE PRESTANO SERVIZIO ASSISTENZIALE H24</h2>
+        <h2 id="titolo-turni">FARMACIE DI TURNO H24</h2>
         <div id="body-turni"></div>
     </div>
 
-    <div id="footer-promo">
-        </div>
+    <div id="footer-promo"></div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -170,25 +140,35 @@
 
                     if (r[0] === MIO_ID && r[17] === "O") {
                         document.getElementById('txt-nome').innerText = r[1];
-                        const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
-                        const aperta = isAperta(orario);
-                        document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
-                        document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
+                        const orarioOggi = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
+                        const aperta = isAperta(orarioOggi);
+                        
+                        const headerEl = document.getElementById('header');
+                        const statoEl = document.getElementById('stato-testo');
+                        const dettEl = document.getElementById('orario-dettaglio');
 
-                      // GESTIONE FOOTER DINAMICO (Colonna F -> r[5])
-const urlFooter = r[5] ? r[5].trim() : ""; 
-const footerEl = document.getElementById('footer-promo');
+                        if (aperta) {
+                            headerEl.className = "aperto";
+                            statoEl.innerText = "APERTO";
+                            statoEl.className = "testo-aperto";
+                            dettEl.innerText = "ORARIO DI OGGI: " + orarioOggi;
+                        } else {
+                            headerEl.className = "chiuso";
+                            statoEl.innerText = "ATTUALMENTE CHIUSA";
+                            statoEl.className = "testo-chiuso";
+                            // Calcolo semplice riapertura
+                            const primaOra = orarioOggi.split('-')[0] || "--:--";
+                            dettEl.innerText = "RIAPRE ALLE ORE " + primaOra;
+                        }
 
-if (urlFooter.startsWith('http')) {
-    // Caso 1: È un link -> Carica Iframe
-    footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
-} else if (urlFooter.length > 0) {
-    // Caso 2: È testo semplice -> Scrivilo nel footer
-    footerEl.innerHTML = `<div id="promo-text-fallback">${urlFooter}</div>`;
-} else {
-    // Caso 3: La cella è vuota -> Messaggio standard
-    footerEl.innerHTML = `<div id="promo-text-fallback">BENVENUTI IN FARMACIA</div>`;
-}
+                        // Footer
+                        const urlFooter = r[5] ? r[5].trim() : ""; 
+                        const footerEl = document.getElementById('footer-promo');
+                        if (urlFooter.startsWith('http')) {
+                            footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
+                        } else {
+                            footerEl.innerHTML = `<div id="promo-text-fallback">${urlFooter || "BENVENUTI"}</div>`;
+                        }
                     } 
                     
                     else if (r[17] === "T") {
@@ -205,7 +185,7 @@ if (urlFooter.startsWith('http')) {
                     }
                 }
                 document.getElementById('body-turni').innerHTML = turniHtml;
-            } catch(e) { console.error("Errore caricamento:", e); }
+            } catch(e) { console.error(e); }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
