@@ -3,124 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meteo e News</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body { 
-            background-color: #000; color: white; 
+            background-color: #000; 
             height: 100vh; width: 100vw; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            overflow: hidden;
-            display: flex; flex-direction: column;
+            font-family: sans-serif; 
+            overflow: hidden; 
         }
 
-        /* AREA METEO: occupa il 90% della vista */
+        /* METEO: lo limitiamo all'85% dell'altezza per lasciare un buco nero sotto */
         #container-meteo {
-            flex: 0 0 90vh;
+            height: 85vh;
             width: 100%;
-            display: flex; justify-content: center; align-items: center;
-            background: #000;
-        }
-
-        #weather-widget {
-            width: 98%; height: 98%; border: none;
-        }
-
-        /* BANDA NEWS: occupa il 10% della vista (sempre visibile in basso) */
-        #news-ticker {
-            flex: 0 0 10vh;
-            width: 100%;
-            background: #0a192f; /* Blu molto scuro */
-            border-top: 5px solid #00ff88; /* Linea verde neon */
-            display: flex; align-items: center;
             overflow: hidden;
-            position: relative;
-            z-index: 999;
+        }
+
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* BANDA NEWS: Posizionata in modo ASSOLUTO sul fondo */
+        #news-ticker {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 15vh; /* Molto alta per essere sicuri di vederla */
+            background: #000;
+            border-top: 6px solid #00ff88;
+            display: flex;
+            align-items: center;
+            z-index: 9999; /* Sopra a ogni cosa */
         }
 
         .ticker-wrapper {
             display: inline-flex;
             white-space: nowrap;
-            will-change: transform;
-            animation: marquee 60s linear infinite;
+            animation: marquee 40s linear infinite;
         }
 
         .news-item {
-            font-size: 2.2rem; 
+            font-size: 3rem; /* Testo ENORME per il test */
             font-weight: 900;
-            text-transform: uppercase;
-            padding: 0 60px;
             color: #ffffff;
-            display: flex; align-items: center;
+            padding: 0 50px;
+            text-transform: uppercase;
         }
 
-        .news-item::after {
-            content: "✚";
-            margin-left: 60px;
-            color: #00ff88;
-        }
+        .news-item::after { content: " ✚ "; color: #00ff88; margin-left: 40px; }
 
         @keyframes marquee {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); } /* Loop su contenuto raddoppiato */
+            100% { transform: translateX(-50%); }
         }
     </style>
 </head>
 <body>
 
     <div id="container-meteo">
-        <iframe id="weather-widget" src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=dark" 
-                frameborder="0" scrolling="NO" allowtransparency="true"></iframe>
+        <iframe src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=dark"></iframe>
     </div>
 
     <div id="news-ticker">
         <div class="ticker-wrapper" id="ticker-content">
-            <span class="news-item">CARICAMENTO ULTIME NOTIZIE ANSA...</span>
-            <span class="news-item">CONNESSIONE AL SERVER NEWS IN CORSO...</span>
+            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 1</span>
+            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 2</span>
+            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 3</span>
+            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 4</span>
         </div>
     </div>
 
     <script>
+        // Questa funzione proverà a sostituire il testo di prova con le news vere
         async function caricaNews() {
             const feedAnsa = "https://www.ansa.it/sito/ansait_rss.xml";
-            // Proxy per bypassare blocchi di sicurezza (CORS)
             const url = `https://api.allorigins.win/get?url=${encodeURIComponent(feedAnsa)}`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(data.contents, "text/xml");
                 const items = xmlDoc.getElementsByTagName("item");
                 
                 if (items.length > 0) {
                     let htmlNews = "";
-                    // Prendiamo le prime 12 notizie
-                    for (let i = 0; i < Math.min(items.length, 12); i++) {
+                    for (let i = 0; i < 10; i++) {
                         let titolo = items[i].getElementsByTagName("title")[0].textContent;
                         htmlNews += `<span class="news-item">${titolo}</span>`;
                     }
-                    
-                    // Inseriamo e raddoppiamo per continuità fluida
-                    const ticker = document.getElementById('ticker-content');
-                    ticker.innerHTML = htmlNews + htmlNews;
-                    
-                    // Regoliamo la velocità (10 secondi a notizia)
-                    ticker.style.animationDuration = (Math.min(items.length, 12) * 10) + "s";
+                    document.getElementById('ticker-content').innerHTML = htmlNews + htmlNews;
                 }
             } catch (e) {
-                console.error("Errore recupero news:", e);
-                // Messaggio di emergenza se internet fallisce
-                const emergenza = `<span class="news-item">ULTIME NOTIZIE NON DISPONIBILI - CONTROLLARE CONNESSIONE</span>`;
-                document.getElementById('ticker-content').innerHTML = emergenza + emergenza;
+                console.log("Errore news, resta testo di prova");
             }
         }
 
-        // Avvio
-        caricaNews();
-        // Aggiorna ogni 15 minuti
-        setInterval(caricaNews, 900000);
+        // Aspetta 5 secondi prima di caricare le news vere, così vedi se il testo di prova appare
+        setTimeout(caricaNews, 5000);
     </script>
 </body>
 </html>
