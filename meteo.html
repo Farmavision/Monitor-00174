@@ -7,28 +7,35 @@
             margin: 0; padding: 0; 
             height: 100%; width: 100%; 
             overflow: hidden; 
-            background-color: white; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: white; /* Lo sfondo bianco aiuta a mimetizzarsi */
         }
-        /* Il segreto: ritagliamo l'iframe di Meteoblue per nascondere i loghi */
+
         .weather-crop {
             width: 100%;
-            height: 150px; /* Altezza della "striscia" */
-            overflow: hidden;
-            position: relative;
+            height: 100vh; /* Usa tutta l'altezza disponibile del footer */
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            position: relative;
         }
+
         iframe {
-            width: 800px; /* Larghezza interna del widget */
-            height: 250px;
+            /* Dimensioni originali del widget prima dello zoom */
+            width: 500px; 
+            height: 200px;
             border: none;
-            /* Lo spostiamo leggermente per centrare solo la parte con le icone */
-            transform: scale(1.8); 
-            pointer-events: none; /* Impedisce clic fastidiosi */
+            
+            /* REGOLAZIONI: */
+            /* 1. Lo zoom: aumentalo o diminuirlo se è troppo grande/piccolo */
+            transform: scale(2.2); 
+            
+            /* 2. Lo spostamento: se vedi il widget tagliato in alto o in basso, 
+               cambia il secondo valore (es. -10px o +10px) */
+            transform-origin: center center;
+            margin-top: -10px; 
+            
+            pointer-events: none;
         }
     </style>
 </head>
