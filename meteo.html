@@ -3,30 +3,23 @@
 <head>
     <meta charset="utf-8">
     <style>
-        /* Rimuove margini, barre di scorrimento e rende lo sfondo trasparente */
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background: transparent; 
-            height: 100%;
-        }
-        /* Centra il widget verticalmente e orizzontalmente */
-        .weather-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            width: 100%;
-        }
-        /* Gestisce le dimensioni del widget */
-        .weatherwidget-io {
-            width: 100%;
-            /* Aumenta questo valore (es. 1.5) se lo vedi troppo piccolo nel monitor */
-            transform: scale(1.2); 
-            transform-origin: center;
-        }
-    </style>
+    body, html { 
+        margin: 0; 
+        padding: 0; 
+        overflow: hidden; 
+        background: transparent; 
+        height: 100%;
+        display: flex;
+        align-items: center; /* Centra verticalmente */
+        justify-content: center;
+    }
+    .weather-container {
+        width: 100%;
+        /* Aumentiamo drasticamente lo zoom per la vetrina */
+        transform: scale(2.2); 
+        transform-origin: center;
+    }
+</style>
 </head>
 <body>
 
