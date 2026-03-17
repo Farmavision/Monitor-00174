@@ -4,33 +4,51 @@
     <meta charset="UTF-8">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body, html { 
             background-color: #000; 
             height: 100%; width: 100%; 
-            overflow: hidden; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        /* Contenitore che centra e ingrandisce le icone */
+
+        /* Contenitore per centrare il widget nel rapporto 53:100 */
         #container {
             width: 100%;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            transform: scale(1.2); /* Ingrandisce tutto per renderlo leggibile */
+            /* Ingrandiamo leggermente le icone per la leggibilità in vetrina */
+            transform: scale(1.15); 
             transform-origin: center;
         }
+
         iframe {
             width: 100%;
             height: 100%;
             border: none;
+            /* Filtro CSS per rendere il widget totalmente monocromatico (Bianco) */
+            filter: grayscale(100%) brightness(200%) contrast(100%);
         }
     </style>
 </head>
 <body>
+
     <div id="container">
-        <iframe src="https://www.meteoblue.com/it/tempo/widget/daily/roma_italia_3169070?geoloc=fixed&days=4&tempunit=CELSIUS&pictoicon=1&maxtemp=1&mintemp=1&wind=0&precip=0&sun=0&layout=dark" 
-                frameborder="0" scrolling="NO" allowtransparency="true">
+        <iframe 
+            src="https://www.meteoblue.com/it/tempo/widget/daily/roma_italia_3169070?geoloc=fixed&days=4&tempunit=CELSIUS&pictoicon=1&maxtemp=1&mintemp=1&wind=0&precip=0&sun=0&layout=dark" 
+            frameborder="0" 
+            scrolling="NO" 
+            allowtransparency="true">
         </iframe>
     </div>
+
+    <script>
+        // Refresh ogni 2 ore
+        setTimeout(() => { location.reload(); }, 7200000);
+    </script>
 </body>
 </html>
