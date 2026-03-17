@@ -12,53 +12,66 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* --- LAYOUT INDISTRUTTIBILE --- */
+        /* --- LAYOUT RICALIBRATO (18% - 50% - 32%) --- */
         #header { 
-            flex: 0 0 20vh; /* Esattamente il 20% dello schermo */
+            flex: 0 0 18vh; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             border-bottom: 8px solid #00ff88; position: relative;
-            padding: 10px 0;
+            padding: 5px 0;
+            transition: background-color 0.5s ease;
         }
 
         #container-main { 
-            flex: 1 1 auto; /* Prende tutto lo spazio rimanente, spingendo giù il footer */
+            flex: 0 0 50vh; 
             padding: 20px; 
             overflow-y: auto; 
         }
 
         #footer-promo {
-            flex: 0 0 30vh; /* Esattamente il 30% dello schermo */
+            flex: 0 0 32vh; 
             width: 100%;
             background-color: white; 
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
 
-        /* --- STILI HEADER (4 RIGHE) --- */
-        #clock { position: absolute; top: 10px; right: 20px; font-size: 1.8rem; color: #00ff88; font-family: monospace; }
+        /* --- STILI HEADER & CROCI --- */
+        #clock { position: absolute; top: 10px; right: 20px; font-size: 1.6rem; color: #00ff88; font-family: monospace; }
         
         .label-static { 
-            font-size: 1.2rem; color: #94a3b8; font-weight: 800; 
+            font-size: 1.1rem; color: #94a3b8; font-weight: 800; 
             text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2px;
         }
 
         #txt-nome { 
-            font-size: 3.8rem; font-weight: 900; color: #00ff88; 
-            text-transform: uppercase; line-height: 1; margin-bottom: 8px;
-            text-shadow: 3px 3px 0px rgba(0,0,0,0.2); text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            font-size: 3.2rem; font-weight: 900; color: #00ff88; 
+            text-transform: uppercase; line-height: 1; margin-bottom: 5px;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2); 
         }
 
-        #stato-testo { font-size: 1.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-        #orario-dettaglio { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin-top: 4px; }
+        .croce { 
+            color: #00ff88; font-size: 0.8em; 
+            animation: pulse-farmacia 2s infinite ease-in-out; 
+        }
+
+        @keyframes pulse-farmacia { 
+            0%, 100% { opacity: 0.3; transform: scale(0.9); } 
+            50% { opacity: 1; transform: scale(1.1); } 
+        }
+
+        #stato-testo { font-size: 1.4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        #orario-dettaglio { font-size: 1.5rem; color: #cbd5e1; font-weight: 600; }
 
         /* Stati Colore */
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; border-bottom-color: #ff4444 !important; }
         .testo-aperto { color: #00ff88 !important; }
         .testo-chiuso { color: #ffffff !important; }
+        .chiuso .croce { color: white; } /* Croci bianche su fondo rosso */
 
         /* --- CARD & TITOLI --- */
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.8rem; margin-bottom: 20px; text-transform: uppercase; }
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.6rem; margin-bottom: 20px; text-transform: uppercase; }
         
         .card { 
             background: #172a45; margin-bottom: 25px; padding: 20px; 
@@ -82,13 +95,17 @@
     <div id="header" class="chiuso">
         <div id="clock">--:--:--</div>
         <div class="label-static">FARMACIA</div>
-        <div id="txt-nome">CARICAMENTO...</div>
+        <div id="txt-nome">
+            <span class="croce">✚</span>
+            <span id="nome-farma-testo">CARICAMENTO...</span>
+            <span class="croce">✚</span>
+        </div>
         <div id="stato-testo">---</div>
         <div id="orario-dettaglio">---</div>
     </div>
 
     <div id="container-main">
-        <h2 id="titolo-turni">FARMACIE DI TURNO CHE PRESTANO SERVIZIO ASSISTENZIALE H24</h2>
+        <h2 id="titolo-turni">FARMACIE DI TURNO H24</h2>
         <div id="body-turni"></div>
     </div>
 
@@ -133,12 +150,13 @@
 
                 for (let i = 1; i < righe.length; i++) {
                     const r = righe[i];
-                    if (!r[1]) continue; // Salta righe vuote
+                    if (!r[1]) continue;
 
                     try {
-                        // --- LOGICA OWNER (La tua Farmacia) ---
                         if (r[0] === MIO_ID && r[17] === "O") {
-                            document.getElementById('txt-nome').innerText = r[1];
+                            // Aggiorna solo lo span interno per non cancellare le croci
+                            document.getElementById('nome-farma-testo').innerText = r[1];
+                            
                             const orarioOggi = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
                             const aperta = isAperta(orarioOggi);
                             
@@ -155,8 +173,6 @@
                                 headerEl.className = "chiuso";
                                 statoEl.innerText = "ATTUALMENTE CHIUSA";
                                 statoEl.className = "testo-chiuso";
-                                
-                                // Calcolo di Riapertura Blindato (non va più in crash)
                                 let primaOra = "--:--";
                                 if (orarioOggi) {
                                     const oStr = String(orarioOggi);
@@ -165,46 +181,5 @@
                                 dettEl.innerText = "RIAPRE ALLE ORE " + primaOra;
                             }
 
-                            // --- LOGICA FOOTER DINAMICO ---
                             const urlFooter = r[5] ? r[5].trim() : ""; 
-                            const footerEl = document.getElementById('footer-promo');
-                            if (urlFooter.startsWith('http')) {
-                                footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
-                            } else {
-                                footerEl.innerHTML = `<div id="promo-text-fallback">${urlFooter || "BENVENUTI IN FARMACIA"}</div>`;
-                            }
-                        } 
-                        
-                        // --- LOGICA TURNI (Card) ---
-                        else if (r[17] === "T") {
-                            const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
-                            turniHtml += `
-                                <div class="card">
-                                    <div class="card-info">
-                                        <div class="label-fisso">FARMACIA</div>
-                                        <h3>${r[1]}</h3>
-                                        <p>${r[2]}</p>
-                                    </div>
-                                    ${qr}
-                                </div>`;
-                        }
-                    } catch (rowError) {
-                        console.error("Errore nell'elaborazione della riga:", rowError);
-                        // Se una riga ha un problema, il programma salta l'errore e continua a stampare le altre!
-                    }
-                }
-                
-                // Inserisce le card solo alla fine
-                document.getElementById('body-turni').innerHTML = turniHtml;
-                
-            } catch(e) { console.error("Errore Fetch:", e); }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            updateClock();
-            carica();
-            setInterval(carica, 45000);
-        });
-    </script>
-</body>
-</html>
+                            const footerEl = document.getElementById('
