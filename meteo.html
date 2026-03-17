@@ -20,17 +20,16 @@
 
         /* --- CONTENITORE METEO --- */
         #weather-container {
-            flex: 1; /* Prende tutto lo spazio sopra la barra news */
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-bottom: 6vh; /* Spazio per non sovrapporsi alle news */
+            padding-bottom: 7vh; 
         }
 
-        /* Widget Meteo Esterno (Esempio con scritte grandi) */
         #weather-widget {
-            width: 90%;
-            height: 70%;
+            width: 95%;
+            height: 85%;
             border-radius: 20px;
             overflow: hidden;
             border: 2px solid #1e293b;
@@ -42,7 +41,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 7vh; /* Altezza ottimale per la leggibilità */
+            height: 7vh;
             background: linear-gradient(to right, #0a192f, #000);
             display: flex;
             align-items: center;
@@ -55,46 +54,104 @@
         .ticker-wrapper {
             display: inline-flex;
             white-space: nowrap;
-            padding-left: 100%; /* Inizia fuori schermo */
-            animation: marquee 50s linear infinite;
+            will-change: transform;
+            animation: marquee 60s linear infinite; /* Velocità regolabile */
         }
 
         .news-item {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 800;
             text-transform: uppercase;
-            padding: 0 60px;
+            padding: 0 40px;
             display: flex;
             align-items: center;
             color: #ffffff;
         }
 
-        /* Separatore tra le notizie */
         .news-item::after {
-            content: "✚"; /* Croce farmaceutica come separatore */
-            margin-left: 60px;
+            content: "✚";
+            margin-left: 40px;
             color: #00ff88;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             animation: pulse-green 2s infinite;
         }
 
         @keyframes marquee {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
+            100% { transform: translateX(-50%); } /* Si ferma a metà perché il contenuto è raddoppiato */
         }
 
         @keyframes pulse-green {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            50% { opacity: 0.3; }
         }
 
-        /* Overlay per sfumatura ai lati della barra news */
+        /* Sfumature ai lati per l'effetto dissolvenza */
         #news-ticker::before, #news-ticker::after {
             content: "";
             position: absolute;
             top: 0;
-            width: 100px;
+            width: 80px;
             height: 100%;
             z-index: 2;
         }
-        #news-ticker::
+        #news-ticker::before { left: 0; background: linear-gradient(to right, #000, transparent); }
+        #news-ticker::after { right: 0; background: linear-gradient(to left, #000, transparent); }
+    </style>
+</head>
+<body>
+
+    <div id="weather-container">
+        <iframe id="weather-widget" 
+            src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=dark"  
+            frameborder="0" scrolling="NO" allowtransparency="true">
+        </iframe>
+    </div>
+
+    <div id="news-ticker">
+        <div class="ticker-wrapper" id="ticker-content">
+            <span class="news-item">Caricamento ultime notizie ANSA...</span>
+        </div>
+    </div>
+
+    <script>
+        async function fetchNews() {
+            const RSS_URL = "https://www.ansa.it/sito/ansait_rss.xml";
+            const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
+
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                if (data.status === 'ok' && data.items.length > 0) {
+                    const ticker = document.getElementById('ticker-content');
+                    
+                    // Creiamo il blocco di news
+                    const newsHtml = data.items.map(item => `
+                        <span class="news-item">${item.title}</span>
+                    `).join('');
+                    
+                    // Raddoppiamo il contenuto per il loop infinito fluido
+                    ticker.innerHTML = newsHtml + newsHtml;
+                    
+                    // Regola la velocità in base al numero di notizie (10s a notizia)
+                    const duration = data.items.length * 10;
+                    ticker.style.animationDuration = `${duration}s`;
+                }
+            } catch (e) {
+                console.error("Errore news:", e);
+                document.getElementById('ticker-content').innerHTML = `
+                    <span class="news-item">Servizio news momentaneamente non disponibile</span>
+                `;
+            }
+        }
+
+        fetchNews();
+        // Aggiorna ogni 15 minuti
+        setInterval(fetchNews, 900000);
+        
+        // Refresh pagina ogni 3 ore per stabilità
+        setTimeout(() => { location.reload(); }, 10800000);
+    </script>
+</body>
+</html>
