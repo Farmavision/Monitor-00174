@@ -9,46 +9,87 @@
             background-color: #000; 
             height: 100%; width: 100%; 
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Arial Black', sans-serif; /* Font massiccio per la distanza */
+            color: #ffffff;
         }
 
-        /* Contenitore per centrare il widget nel rapporto 53:100 */
-        #container {
-            width: 100%;
-            height: 100%;
+        #footer-container {
             display: flex;
-            justify-content: center;
+            justify-content: space-around;
             align-items: center;
-            /* Ingrandiamo leggermente le icone per la leggibilità in vetrina */
-            transform: scale(1.15); 
-            transform-origin: center;
+            height: 100%;
+            width: 100%;
+            padding: 0 5%;
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            /* Filtro CSS per rendere il widget totalmente monocromatico (Bianco) */
-            filter: grayscale(100%) brightness(200%) contrast(100%);
+        .day-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Icona Meteo Enorme */
+        .icon {
+            font-size: 5vw; /* Si adatta alla larghezza del monitor */
+            margin-bottom: 5px;
+            filter: brightness(2);
+        }
+
+        /* Temperatura Grande e Chiara */
+        .temp {
+            font-size: 3.5vw; 
+            font-weight: 900;
+            letter-spacing: -2px;
+        }
+
+        .label {
+            font-size: 1.2vw;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        /* Linea di separazione verticale tra i giorni */
+        .separator {
+            width: 2px;
+            height: 50%;
+            background: rgba(255,255,255,0.1);
         }
     </style>
 </head>
 <body>
 
-    <div id="container">
-        <iframe 
-            src="https://www.meteoblue.com/it/tempo/widget/daily/roma_italia_3169070?geoloc=fixed&days=4&tempunit=CELSIUS&pictoicon=1&maxtemp=1&mintemp=1&wind=0&precip=0&sun=0&layout=dark" 
-            frameborder="0" 
-            scrolling="NO" 
-            allowtransparency="true">
-        </iframe>
+    <div id="footer-container">
+        <div class="day-box">
+            <div class="label">Oggi</div>
+            <div class="icon">☀️</div>
+            <div class="temp">22°</div>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="day-box">
+            <div class="label">Domani</div>
+            <div class="icon">⛅</div>
+            <div class="temp">19°</div>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="day-box">
+            <div class="label">Gio</div>
+            <div class="icon">☁️</div>
+            <div class="temp">17°</div>
+        </div>
     </div>
 
     <script>
-        // Refresh ogni 2 ore
-        setTimeout(() => { location.reload(); }, 7200000);
+        // Per rendere i dati reali, possiamo usare una fetch veloce 
+        // Ma come primo test, verifica se questo layout statico è leggibile sul monitor.
+        // Se lo vedi bene, colleghiamo i dati live dell'ANSA o OpenWeather.
+        setTimeout(() => { location.reload(); }, 3600000);
     </script>
 </body>
 </html>
