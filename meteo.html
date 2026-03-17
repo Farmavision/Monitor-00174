@@ -8,54 +8,57 @@
         
         body { 
             background-color: #000; 
-            height: 100vh; width: 100vw; 
+            height: 100vh; 
+            width: 100vw; 
             font-family: sans-serif; 
-            overflow: hidden; 
-        }
-
-        /* METEO: lo limitiamo all'85% dell'altezza per lasciare un buco nero sotto */
-        #container-meteo {
-            height: 85vh;
-            width: 100%;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        iframe { width: 100%; height: 100%; border: none; }
-
-        /* BANDA NEWS: Posizionata in modo ASSOLUTO sul fondo */
+        /* BANDA NEWS - LA POSIZIONIAMO PER PRIMA NEL CODICE */
         #news-ticker {
-            position: absolute;
-            bottom: 0;
+            position: fixed;
+            bottom: 0; /* Attaccata al fondo */
             left: 0;
             width: 100%;
-            height: 15vh; /* Molto alta per essere sicuri di vederla */
-            background: #000;
-            border-top: 6px solid #00ff88;
+            height: 12vh; /* 12% dell'altezza totale */
+            background: #000 !important;
+            border-top: 5px solid #ff0000; /* BORDO ROSSO DI TEST - Se vedi questo, la banda c'è! */
             display: flex;
             align-items: center;
-            z-index: 9999; /* Sopra a ogni cosa */
+            z-index: 99999; /* Valore altissimo per stare SOPRA l'iframe */
         }
 
         .ticker-wrapper {
             display: inline-flex;
             white-space: nowrap;
-            animation: marquee 40s linear infinite;
+            animation: marquee 30s linear infinite;
         }
 
         .news-item {
-            font-size: 3rem; /* Testo ENORME per il test */
+            font-size: 2.5rem; 
             font-weight: 900;
-            color: #ffffff;
-            padding: 0 50px;
-            text-transform: uppercase;
+            color: #ffffff !important;
+            padding: 0 40px;
         }
-
-        .news-item::after { content: " ✚ "; color: #00ff88; margin-left: 40px; }
 
         @keyframes marquee {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
+
+        /* CONTENITORE METEO - DEVE LASCIARE LO SPAZIO SOTTO */
+        #container-meteo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 88vh; /* 88% di altezza, lascia il 12% per le news */
+            z-index: 1;
+        }
+
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
@@ -66,41 +69,36 @@
 
     <div id="news-ticker">
         <div class="ticker-wrapper" id="ticker-content">
-            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 1</span>
-            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 2</span>
-            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 3</span>
-            <span class="news-item">PROVA VISUALIZZAZIONE NEWS 4</span>
+            <span class="news-item">+++ TEST VISIBILITÀ: SE LEGGI QUESTO LA BANDA FUNZIONA +++</span>
+            <span class="news-item">+++ CARICAMENTO NOTIZIE ANSA IN CORSO +++</span>
+            <span class="news-item">+++ TEST VISIBILITÀ: SE LEGGI QUESTO LA BANDA FUNZIONA +++</span>
+            <span class="news-item">+++ CARICAMENTO NOTIZIE ANSA IN CORSO +++</span>
         </div>
     </div>
 
     <script>
-        // Questa funzione proverà a sostituire il testo di prova con le news vere
-        async function caricaNews() {
-            const feedAnsa = "https://www.ansa.it/sito/ansait_rss.xml";
-            const url = `https://api.allorigins.win/get?url=${encodeURIComponent(feedAnsa)}`;
-
+        async function fetchAnsa() {
             try {
-                const response = await fetch(url);
+                // Usiamo un proxy diverso (cors-anywhere alternativo)
+                const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.ansa.it/sito/ansait_rss.xml'));
                 const data = await response.json();
                 const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-                const items = xmlDoc.getElementsByTagName("item");
+                const xml = parser.parseFromString(data.contents, "text/xml");
+                const items = xml.querySelectorAll("item");
                 
-                if (items.length > 0) {
-                    let htmlNews = "";
-                    for (let i = 0; i < 10; i++) {
-                        let titolo = items[i].getElementsByTagName("title")[0].textContent;
-                        htmlNews += `<span class="news-item">${titolo}</span>`;
+                if(items.length > 0) {
+                    let txt = "";
+                    for(let i=0; i<12; i++) {
+                        let title = items[i].querySelector("title").textContent;
+                        txt += `<span class="news-item">${title.toUpperCase()}</span>`;
                     }
-                    document.getElementById('ticker-content').innerHTML = htmlNews + htmlNews;
+                    document.getElementById('ticker-content').innerHTML = txt + txt;
                 }
-            } catch (e) {
-                console.log("Errore news, resta testo di prova");
-            }
+            } catch(e) { console.log("Errore dati, resta il test."); }
         }
 
-        // Aspetta 5 secondi prima di caricare le news vere, così vedi se il testo di prova appare
-        setTimeout(caricaNews, 5000);
+        // Prova a caricare dopo 3 secondi
+        setTimeout(fetchAnsa, 3000);
     </script>
 </body>
 </html>
