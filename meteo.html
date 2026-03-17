@@ -8,46 +8,35 @@
             height: 100%; width: 100%; 
             overflow: hidden; 
             background-color: white; 
-        }
-        .weather-container {
-            width: 100%;
-            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        /* NON usiamo scale, ma forziamo l'altezza del widget */
-        .weatherwidget-io {
-            display: block;
-            width: 100% !important;
-            min-height: 250px; /* Spazio vitale per lo script */
+        /* Il segreto: ritagliamo l'iframe di Meteoblue per nascondere i loghi */
+        .weather-crop {
+            width: 100%;
+            height: 150px; /* Altezza della "striscia" */
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        iframe {
+            width: 800px; /* Larghezza interna del widget */
+            height: 250px;
+            border: none;
+            /* Lo spostiamo leggermente per centrare solo la parte con le icone */
+            transform: scale(1.8); 
+            pointer-events: none; /* Impedisce clic fastidiosi */
         }
     </style>
 </head>
 <body>
 
-    <div class="weather-container">
-        <a class="weatherwidget-io" 
-           href="https://forecast7.com/it/41d9012d50/rome/" 
-           data-label_1="ROMA" 
-           data-label_2="METEO" 
-           data-font="Roboto" 
-           data-icons="Climacons Animated" 
-           data-mode="Current" 
-           data-theme="pure" 
-           style="font-size: 32px;">ROMA METEO</a>
-        
-        <script>
-        !function(d,s,id){
-            var js,fjs=d.getElementsByTagName(s)[0];
-            if(!d.getElementById(id)){
-                js=d.createElement(s);
-                js.id=id;
-                js.src='https://weatherwidget.io/js/widget.min.js';
-                fjs.parentNode.insertBefore(js,fjs);
-            }
-        }(document,'script','weatherwidget-io-js');
-        </script>
+    <div class="weather-crop">
+        <iframe src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=1&days=3&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=bright"  
+                frameborder="0" scrolling="no" allowtransparency="true"></iframe>
     </div>
 
 </body>
