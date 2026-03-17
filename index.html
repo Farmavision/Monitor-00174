@@ -12,13 +12,12 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* --- LAYOUT RICALIBRATO (18% - 50% - 32%) --- */
+        /* --- LAYOUT 18-50-32 --- */
         #header { 
             flex: 0 0 18vh; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            border-bottom: 8px solid #00ff88; position: relative;
+            border-bottom: 6px solid #00ff88; position: relative;
             padding: 5px 0;
-            transition: background-color 0.5s ease;
         }
 
         #container-main { 
@@ -35,59 +34,35 @@
             overflow: hidden;
         }
 
-        /* --- STILI HEADER & CROCI --- */
-        #clock { position: absolute; top: 10px; right: 20px; font-size: 1.6rem; color: #00ff88; font-family: monospace; }
-        
-        .label-static { 
-            font-size: 1.1rem; color: #94a3b8; font-weight: 800; 
-            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2px;
-        }
+        /* --- STILI HEADER --- */
+        #clock { position: absolute; top: 10px; right: 20px; font-size: 1.4rem; color: #00ff88; font-family: monospace; }
+        .label-static { font-size: 0.9rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
 
         #txt-nome { 
-            display: flex; align-items: center; justify-content: center; gap: 20px;
-            font-size: 3.2rem; font-weight: 900; color: #00ff88; 
-            text-transform: uppercase; line-height: 1; margin-bottom: 5px;
-            text-shadow: 3px 3px 0px rgba(0,0,0,0.2); 
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            font-size: 2.8rem; font-weight: 900; color: #00ff88; 
+            text-transform: uppercase; line-height: 1.1; margin: 5px 0;
         }
 
-        .croce { 
-            color: #00ff88; font-size: 0.8em; 
-            animation: pulse-farmacia 2s infinite ease-in-out; 
-        }
+        .croce { color: #00ff88; font-size: 0.7em; animation: pulse-farmacia 2s infinite ease-in-out; }
+        @keyframes pulse-farmacia { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
 
-        @keyframes pulse-farmacia { 
-            0%, 100% { opacity: 0.3; transform: scale(0.9); } 
-            50% { opacity: 1; transform: scale(1.1); } 
-        }
+        #stato-testo { font-size: 1.2rem; font-weight: 900; text-transform: uppercase; }
+        #orario-dettaglio { font-size: 1.2rem; color: #cbd5e1; font-weight: 600; }
 
-        #stato-testo { font-size: 1.4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-        #orario-dettaglio { font-size: 1.5rem; color: #cbd5e1; font-weight: 600; }
-
-        /* Stati Colore */
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; border-bottom-color: #ff4444 !important; }
         .testo-aperto { color: #00ff88 !important; }
         .testo-chiuso { color: #ffffff !important; }
-        .chiuso .croce { color: white; } /* Croci bianche su fondo rosso */
+        .chiuso .croce { color: white; }
 
-        /* --- CARD & TITOLI --- */
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.6rem; margin-bottom: 20px; text-transform: uppercase; }
-        
-        .card { 
-            background: #172a45; margin-bottom: 25px; padding: 20px; 
-            border-radius: 20px; border: 2px solid #233554; 
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .card-info { flex: 1; text-align: left; display: flex; flex-direction: column; gap: 4px; }
-        .label-fisso { font-size: 1.1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
-        .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; }
-        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin: 0; }
-
-        .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
-        .qr-wrapper img { width: 120px; height: 120px; display: block; }
-
-        #footer-promo iframe { width: 100%; height: 100%; border: none; display: block; }
-        #promo-text-fallback { font-size: 2.5rem; font-weight: 900; color: #b91c1c; text-align: center; }
+        /* --- CARD --- */
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.4rem; margin-bottom: 15px; }
+        .card { background: #172a45; margin-bottom: 15px; padding: 15px; border-radius: 15px; border: 2px solid #233554; display: flex; align-items: center; }
+        .card-info { flex: 1; }
+        .card h3 { color: #00ff88; font-size: 1.8rem; text-transform: uppercase; }
+        .card p { font-size: 1.3rem; color: #cbd5e1; }
+        .qr-wrapper img { width: 90px; height: 90px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -97,7 +72,7 @@
         <div class="label-static">FARMACIA</div>
         <div id="txt-nome">
             <span class="croce">✚</span>
-            <span id="nome-farma-testo">CARICAMENTO...</span>
+            <span id="nome-testo-dinamico">CARICAMENTO...</span>
             <span class="croce">✚</span>
         </div>
         <div id="stato-testo">---</div>
@@ -112,8 +87,9 @@
     <div id="footer-promo"></div>
 
     <script>
+        // Prende l'ID dall'URL o usa RM002 (come vedo dai tuoi screenshot)
         const urlParams = new URLSearchParams(window.location.search);
-        const MIO_ID = urlParams.get('id') || "RM001"; 
+        const MIO_ID = urlParams.get('id') || "RM002"; 
 
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT'); }
         setInterval(updateClock, 1000);
@@ -143,43 +119,81 @@
             try {
                 const res = await fetch(url + "&t=" + Date.now());
                 const txt = await res.text();
+                // Parsing CSV robusto
                 const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
                 
                 let turniHtml = "";
                 const giorno = new Date().getDay(); 
+                let ownerTrovato = false;
 
                 for (let i = 1; i < righe.length; i++) {
                     const r = righe[i];
                     if (!r[1]) continue;
 
-                    try {
-                        if (r[0] === MIO_ID && r[17] === "O") {
-                            // Aggiorna solo lo span interno per non cancellare le croci
-                            document.getElementById('nome-farma-testo').innerText = r[1];
-                            
-                            const orarioOggi = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
-                            const aperta = isAperta(orarioOggi);
-                            
-                            const headerEl = document.getElementById('header');
-                            const statoEl = document.getElementById('stato-testo');
-                            const dettEl = document.getElementById('orario-dettaglio');
+                    // CONTROLLO OWNER
+                    if (r[0] === MIO_ID && r[17] === "O") {
+                        ownerTrovato = true;
+                        document.getElementById('nome-testo-dinamico').innerText = r[1];
+                        
+                        const orarioOggi = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
+                        const aperta = isAperta(orarioOggi);
+                        
+                        const headerEl = document.getElementById('header');
+                        const statoEl = document.getElementById('stato-testo');
+                        const dettEl = document.getElementById('orario-dettaglio');
 
-                            if (aperta) {
-                                headerEl.className = "aperto";
-                                statoEl.innerText = "APERTO";
-                                statoEl.className = "testo-aperto";
-                                dettEl.innerText = "ORARIO DI OGGI: " + (orarioOggi || "H24");
-                            } else {
-                                headerEl.className = "chiuso";
-                                statoEl.innerText = "ATTUALMENTE CHIUSA";
-                                statoEl.className = "testo-chiuso";
-                                let primaOra = "--:--";
-                                if (orarioOggi) {
-                                    const oStr = String(orarioOggi);
-                                    primaOra = oStr.includes('-') ? oStr.split('-')[0].trim() : oStr;
-                                }
-                                dettEl.innerText = "RIAPRE ALLE ORE " + primaOra;
-                            }
+                        if (aperta) {
+                            headerEl.className = "aperto";
+                            statoEl.innerText = "APERTO";
+                            statoEl.className = "testo-aperto";
+                            dettEl.innerText = "ORARIO DI OGGI: " + (orarioOggi || "H24");
+                        } else {
+                            headerEl.className = "chiuso";
+                            statoEl.innerText = "ATTUALMENTE CHIUSA";
+                            statoEl.className = "testo-chiuso";
+                            let primaOra = orarioOggi ? (orarioOggi.includes('-') ? orarioOggi.split('-')[0].trim() : orarioOggi) : "--:--";
+                            dettEl.innerText = "RIAPRE ALLE ORE " + primaOra;
+                        }
 
-                            const urlFooter = r[5] ? r[5].trim() : ""; 
-                            const footerEl = document.getElementById('
+                        const urlFooter = r[5] ? r[5].trim() : ""; 
+                        const footerEl = document.getElementById('footer-promo');
+                        if (urlFooter.startsWith('http')) {
+                            footerEl.innerHTML = `<iframe src="${urlFooter}" style="width:100%; height:100%; border:none;"></iframe>`;
+                        } else {
+                            footerEl.innerHTML = `<div style="font-size:2rem; font-weight:900; color:#b91c1c;">${urlFooter || "BENVENUTI"}</div>`;
+                        }
+                    } 
+                    // CONTROLLO TURNI
+                    else if (r[17] === "T") {
+                        const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
+                        turniHtml += `
+                            <div class="card">
+                                <div class="card-info">
+                                    <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA</div>
+                                    <h3>${r[1]}</h3>
+                                    <p>${r[2]}</p>
+                                </div>
+                                ${qr}
+                            </div>`;
+                    }
+                }
+
+                if (!ownerTrovato) {
+                    document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
+                }
+
+                document.getElementById('body-turni').innerHTML = turniHtml;
+            } catch(e) { 
+                console.error("Errore:", e); 
+                document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            carica();
+            setInterval(carica, 45000);
+        });
+    </script>
+</body>
+</html>
