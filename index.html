@@ -16,14 +16,17 @@
         #header { height: 20vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 8px solid #00ff88; position: relative; flex-shrink: 0; }
         #container-main { height: 55vh; padding: 20px; overflow-y: auto; flex-grow: 1; }
         
-      /* FOOTER DINAMICO (Spostato correttamente qui nel CSS) */
-        #footer-promo iframe {
-    width: 100%;
-    height: 100%;
-    border: none;      /* Rimuove il bordo nero/grigio */
-    display: block;
-    overflow: hidden;  /* Impedisce la comparsa di barre laterali */
-}
+      /* FOOTER DINAMICO: Contenitore e Iframe */
+        #footer-promo {
+            height: 25vh; /* Assegna esattamente il 25% dello schermo */
+            width: 100%;
+            background-color: white; /* Sfondo bianco per far risaltare il meteo, puoi cambiarlo! */
+            flex-shrink: 0; /* Impedisce al contenitore centrale di schiacciarlo */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
         #footer-promo iframe {
             width: 100%;
