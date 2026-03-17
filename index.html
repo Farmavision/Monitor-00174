@@ -54,7 +54,18 @@
         /* Riga 2: Nome dinamico */
         .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; line-height: 1; }
         /* Riga 3: Indirizzo dinamico */
-        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin: 0; }
+        .card p { 
+    font-size: 1.6rem; 
+    color: #cbd5e1; 
+    font-weight: 600; 
+    margin: 0; 
+    text-transform: lowercase; /* Trasforma tutto in minuscolo */
+}
+
+/* Questa riga forza la prima lettera dell'indirizzo in MAIUSCOLO */
+.card p::first-letter { 
+    text-transform: uppercase; 
+}
 
         .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
         .qr-wrapper img { width: 130px; height: 130px; display: block; }
