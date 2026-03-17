@@ -109,4 +109,61 @@
         }
 
         async function carica() {
-            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2D
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
+            try {
+                const res = await fetch(url + "&t=" + Date.now());
+                const txt = await res.text();
+                const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
+                
+                let turniHtml = "";
+                const giorno = new Date().getDay(); 
+
+                for (let i = 1; i < righe.length; i++) {
+                    const r = righe[i];
+                    if (!r[1]) continue;
+
+                    if (r[0] === MIO_ID && r[17] === "O") {
+                        document.getElementById('txt-nome').innerText = r[1];
+                        const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
+                        const aperta = isAperta(orario);
+                        document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
+                        document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
+                    } 
+                    
+                    else if (r[17] === "T") {
+                        const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
+                        
+                        // APPLICAZIONE MODIFICA: 3 RIGHE DISTINTE
+                        turniHtml += `
+                            <div class="card">
+                                <div class="card-info">
+                                    <div class="label-fisso">FARMACIA</div>
+                                    <h3>${r[1]}</h3>
+                                    <p>${r[2]}</p>
+                                </div>
+                                ${qr}
+                            </div>`;
+                    }
+                }
+                document.getElementById('body-turni').innerHTML = turniHtml;
+            } catch(e) { console.error(e); }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            carica();
+            setInterval(carica, 45000);
+            
+            const promo = ["SCONTO 20% SOLARI", "PRESSIONE GRATUITA", "ECG IMMEDIATO"];
+            let pIdx = 0;
+            setInterval(() => {
+                const promoEl = document.getElementById('promo-text');
+                if (promoEl) {
+                    promoEl.innerText = promo[pIdx];
+                    pIdx = (pIdx + 1) % promo.length;
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
