@@ -4,10 +4,8 @@
     <meta charset="utf-8">
     <style>
         body, html { 
-            margin: 0; 
-            padding: 0; 
-            height: 100%; 
-            width: 100%; 
+            margin: 0; padding: 0; 
+            height: 100%; width: 100%; 
             overflow: hidden; 
             background-color: white; 
         }
@@ -18,12 +16,11 @@
             align-items: center;
             justify-content: center;
         }
-        /* Forza il widget a essere grande e visibile */
+        /* NON usiamo scale, ma forziamo l'altezza del widget */
         .weatherwidget-io {
             display: block;
-            width: 90% !important;
-            min-height: 150px; /* Altezza minima per forzare il rendering */
-            transform: scale(2); /* Usiamo di nuovo scale ma con contenitore flessibile */
+            width: 100% !important;
+            min-height: 250px; /* Spazio vitale per lo script */
         }
     </style>
 </head>
@@ -37,7 +34,8 @@
            data-font="Roboto" 
            data-icons="Climacons Animated" 
            data-mode="Current" 
-           data-theme="pure" >ROMA METEO</a>
+           data-theme="pure" 
+           style="font-size: 32px;">ROMA METEO</a>
         
         <script>
         !function(d,s,id){
@@ -51,15 +49,6 @@
         }(document,'script','weatherwidget-io-js');
         </script>
     </div>
-
-    <script>
-        // Forza il ricaricamento se il widget non appare dopo 2 secondi
-        setTimeout(function() {
-            if (typeof __weatherwidget_init === 'function') {
-                __weatherwidget_init();
-            }
-        }, 2000);
-    </script>
 
 </body>
 </html>
