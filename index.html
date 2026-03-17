@@ -27,18 +27,34 @@
         .chiuso { background: #b91c1c; }
         .chiuso .croce, .chiuso #clock { color: white !important; }
 
-        /* NUOVO: TITOLO SEZIONE TURNI */
+        /* TITOLO SEZIONE TURNI */
         #titolo-turni { text-align: center; color: #00ff88; font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* CARD: TESTO SX, QR DX */
+        /* --- MODIFICA CARD: STRUTTURA A 3 RIGHE --- */
         .card { 
             background: #172a45; margin-bottom: 25px; padding: 20px; 
             border-radius: 20px; border: 2px solid #233554; 
             display: flex; align-items: center; justify-content: space-between;
         }
-        .card-info { flex: 1; text-align: left; }
-        .card h3 { color: #00ff88; font-size: 2.2rem; text-transform: uppercase; margin: 0; }
-        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin-top: 5px; }
+        .card-info { 
+            flex: 1; 
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Spazio bilanciato tra le righe */
+        }
+        /* Riga 1: Etichetta fissa */
+        .label-fisso { 
+            font-size: 1.1rem; 
+            color: #94a3b8; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        /* Riga 2: Nome dinamico */
+        .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; line-height: 1; }
+        /* Riga 3: Indirizzo dinamico */
+        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin: 0; }
 
         .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
         .qr-wrapper img { width: 130px; height: 130px; display: block; }
@@ -66,7 +82,6 @@
     <div id="footer-promo"><div id="promo-text">OFFERTE</div></div>
 
     <script>
-        // MODIFICA: LETTURA DINAMICA DELL'ID DALLA URL
         const urlParams = new URLSearchParams(window.location.search);
         const MIO_ID = urlParams.get('id') || "RM001"; 
 
@@ -94,58 +109,4 @@
         }
 
         async function carica() {
-            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
-            try {
-                const res = await fetch(url + "&t=" + Date.now());
-                const txt = await res.text();
-                const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
-                
-                let turniHtml = "";
-                const giorno = new Date().getDay(); 
-
-                for (let i = 1; i < righe.length; i++) {
-                    const r = righe[i];
-                    if (!r[1]) continue;
-
-                    if (r[0] === MIO_ID && r[17] === "O") {
-                        document.getElementById('txt-nome').innerText = r[1];
-                        const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
-                        const aperta = isAperta(orario);
-                        document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
-                        document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
-                    } 
-                    
-                    else if (r[17] === "T") {
-                        const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
-                        turniHtml += `
-                            <div class="card">
-                                <div class="card-info">
-                                    <h3>${r[1]}</h3>
-                                    <p>${r[2]}</p>
-                                </div>
-                                ${qr}
-                            </div>`;
-                    }
-                }
-                document.getElementById('body-turni').innerHTML = turniHtml;
-            } catch(e) { console.error(e); }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            updateClock();
-            carica();
-            setInterval(carica, 45000);
-            
-            const promo = ["SCONTO 20% SOLARI", "PRESSIONE GRATUITA", "ECG IMMEDIATO"];
-            let pIdx = 0;
-            setInterval(() => {
-                const promoEl = document.getElementById('promo-text');
-                if (promoEl) {
-                    promoEl.innerText = promo[pIdx];
-                    pIdx = (pIdx + 1) % promo.length;
-                }
-            }, 5000);
-        });
-    </script>
-</body>
-</html>
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2D
