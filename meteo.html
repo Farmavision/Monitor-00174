@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <style>
-        /* Rimuove margini e rende lo sfondo trasparente */
+        /* Rimuove margini, barre di scorrimento e rende lo sfondo trasparente */
         body, html { 
             margin: 0; 
             padding: 0; 
@@ -10,28 +11,31 @@
             background: transparent; 
             height: 100%;
         }
-        /* Centra il widget verticalmente */
+        /* Centra il widget verticalmente e orizzontalmente */
         .weather-container {
             display: flex;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             width: 100%;
         }
-        /* Ingrandisce il widget per la visibilità da vetrina */
+        /* Gestisce le dimensioni del widget */
         .weatherwidget-io {
-            transform: scale(1.5); 
+            width: 100%;
+            /* Aumenta questo valore (es. 1.5) se lo vedi troppo piccolo nel monitor */
+            transform: scale(1.2); 
             transform-origin: center;
         }
     </style>
 </head>
 <body>
 
-<div class="weather-container">
-    <a class="weatherwidget-io" href="https://forecast7.com/it/41d8912d48/rome/" data-label_1="ROMA" data-label_2="METEO" data-font="Roboto" data-icons="Climacons Animated" data-mode="Current" data-theme="pure" >ROMA METEO</a>
-    <script>
-    !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
-    </script>
-</div>
+    <div class="weather-container">
+        <a class="weatherwidget-io" href="https://forecast7.com/it/41d9012d50/rome/" data-label_1="ROME" data-label_2="WEATHER" data-theme="gray" >ROME WEATHER</a>
+        <script>
+        !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
+        </script>
+    </div>
 
 </body>
 </html>
