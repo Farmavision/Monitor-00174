@@ -90,7 +90,33 @@
         <div id="body-turni"></div>
     </div>
 
-    <div id="footer-promo"><div id="promo-text">OFFERTE</div></div>
+    /* FOOTER DINAMICO */
+        #footer-promo { 
+            height: 25vh; 
+            background: white; 
+            border-top: 8px solid #00ff88; 
+            flex-shrink: 0; 
+            overflow: hidden; 
+            padding: 0; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #footer-promo iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        #promo-text-fallback { 
+            font-size: 3rem; 
+            font-weight: 900; 
+            color: #b91c1c; 
+            text-transform: uppercase; 
+            text-align: center;
+        }
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -119,7 +145,7 @@
             return false;
         }
 
-        async function carica() {
+async function carica() {
             const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             try {
                 const res = await fetch(url + "&t=" + Date.now());
@@ -133,18 +159,30 @@
                     const r = righe[i];
                     if (!r[1]) continue;
 
+                    // GESTIONE OWNER (IL TUO MONITOR)
                     if (r[0] === MIO_ID && r[17] === "O") {
                         document.getElementById('txt-nome').innerText = r[1];
                         const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
                         const aperta = isAperta(orario);
                         document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
                         document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
+
+                        // LOGICA FOOTER DINAMICO (Colonna F -> r[5])
+                        const urlFooter = r[5]; 
+                        const footerEl = document.getElementById('footer-promo');
+                        
+                        if (urlFooter && urlFooter.startsWith('http')) {
+                            // Se c'è un link, caricalo nell'iframe
+                            footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
+                        } else {
+                            // Se la cella è vuota, mostra testo di default
+                            footerEl.innerHTML = `<div id="promo-text-fallback">BENVENUTI IN FARMACIA</div>`;
+                        }
                     } 
                     
+                    // GESTIONE TURNI (BODY)
                     else if (r[17] === "T") {
                         const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
-                        
-                        // APPLICAZIONE MODIFICA: 3 RIGHE DISTINTE
                         turniHtml += `
                             <div class="card">
                                 <div class="card-info">
@@ -157,7 +195,7 @@
                     }
                 }
                 document.getElementById('body-turni').innerHTML = turniHtml;
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Errore caricamento:", e); }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
