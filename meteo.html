@@ -3,49 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meteo e News Farmacia</title>
+    <title>Meteo e News</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
         body { 
-            background-color: #000; 
-            color: white; 
-            height: 100vh; 
-            width: 100vw; 
-            font-family: 'Segoe UI', sans-serif;
+            background-color: #000; color: white; 
+            height: 100vh; width: 100vw; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
-        /* --- AREA METEO (93% dell'altezza) --- */
-        #weather-container {
-            flex: 0 0 93vh; 
+        /* AREA METEO: occupa il 90% della vista */
+        #container-meteo {
+            flex: 0 0 90vh;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             background: #000;
         }
 
         #weather-widget {
-            width: 98%;
-            height: 95%;
-            border-radius: 15px;
-            border: none;
+            width: 98%; height: 98%; border: none;
         }
 
-        /* --- AREA NEWS (7% dell'altezza) --- */
+        /* BANDA NEWS: occupa il 10% della vista (sempre visibile in basso) */
         #news-ticker {
-            flex: 0 0 7vh;
+            flex: 0 0 10vh;
             width: 100%;
-            background: #0a192f;
-            border-top: 3px solid #00ff88;
-            display: flex;
-            align-items: center;
+            background: #0a192f; /* Blu molto scuro */
+            border-top: 5px solid #00ff88; /* Linea verde neon */
+            display: flex; align-items: center;
             overflow: hidden;
             position: relative;
-            z-index: 9999; /* Forza la visibilità sopra ogni cosa */
+            z-index: 999;
         }
 
         .ticker-wrapper {
@@ -56,87 +46,81 @@
         }
 
         .news-item {
-            font-size: 1.8rem;
-            font-weight: 800;
+            font-size: 2.2rem; 
+            font-weight: 900;
             text-transform: uppercase;
-            padding: 0 50px;
-            display: flex;
-            align-items: center;
+            padding: 0 60px;
             color: #ffffff;
+            display: flex; align-items: center;
         }
 
         .news-item::after {
             content: "✚";
-            margin-left: 50px;
+            margin-left: 60px;
             color: #00ff88;
-            font-size: 1.4rem;
         }
 
         @keyframes marquee {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); } 
+            100% { transform: translateX(-50%); } /* Loop su contenuto raddoppiato */
         }
-
-        /* Sfumature per non far apparire le news dal nulla */
-        #news-ticker::before, #news-ticker::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            width: 100px;
-            height: 100%;
-            z-index: 10;
-        }
-        #news-ticker::before { left: 0; background: linear-gradient(to right, #000, transparent); }
-        #news-ticker::after { right: 0; background: linear-gradient(to left, #000, transparent); }
     </style>
 </head>
 <body>
 
-    <div id="weather-container">
-        <iframe id="weather-widget" 
-            src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=dark"  
-            frameborder="0" scrolling="NO" allowtransparency="true">
-        </iframe>
+    <div id="container-meteo">
+        <iframe id="weather-widget" src="https://www.meteoblue.com/it/tempo/widget/three/roma_italia_3169070?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=dark" 
+                frameborder="0" scrolling="NO" allowtransparency="true"></iframe>
     </div>
 
     <div id="news-ticker">
         <div class="ticker-wrapper" id="ticker-content">
-            <span class="news-item">Caricamento Ultime Notizie...</span>
-            <span class="news-item">Caricamento Ultime Notizie...</span>
+            <span class="news-item">CARICAMENTO ULTIME NOTIZIE ANSA...</span>
+            <span class="news-item">CONNESSIONE AL SERVER NEWS IN CORSO...</span>
         </div>
     </div>
 
     <script>
-        async function fetchNews() {
-            const RSS_URL = "https://www.ansa.it/sito/ansait_rss.xml";
-            // Usiamo un proxy per evitare blocchi CORS (importante!)
-            const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
+        async function caricaNews() {
+            const feedAnsa = "https://www.ansa.it/sito/ansait_rss.xml";
+            // Proxy per bypassare blocchi di sicurezza (CORS)
+            const url = `https://api.allorigins.win/get?url=${encodeURIComponent(feedAnsa)}`;
 
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data.status === 'ok' && data.items.length > 0) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                const items = xmlDoc.getElementsByTagName("item");
+                
+                if (items.length > 0) {
+                    let htmlNews = "";
+                    // Prendiamo le prime 12 notizie
+                    for (let i = 0; i < Math.min(items.length, 12); i++) {
+                        let titolo = items[i].getElementsByTagName("title")[0].textContent;
+                        htmlNews += `<span class="news-item">${titolo}</span>`;
+                    }
+                    
+                    // Inseriamo e raddoppiamo per continuità fluida
                     const ticker = document.getElementById('ticker-content');
-                    const newsHtml = data.items.map(item => `<span class="news-item">${item.title}</span>`).join('');
+                    ticker.innerHTML = htmlNews + htmlNews;
                     
-                    // Raddoppio per loop infinito
-                    ticker.innerHTML = newsHtml + newsHtml;
-                    
-                    // Regola velocità (12 secondi a notizia)
-                    const duration = data.items.length * 12;
-                    ticker.style.animationDuration = `${duration}s`;
+                    // Regoliamo la velocità (10 secondi a notizia)
+                    ticker.style.animationDuration = (Math.min(items.length, 12) * 10) + "s";
                 }
             } catch (e) {
-                console.error("Errore news:", e);
-                // Se fallisce, mostra un messaggio scorrevole predefinito
-                const fallback = `<span class="news-item">Benvenuti in Farmacia</span>`.repeat(10);
-                document.getElementById('ticker-content').innerHTML = fallback;
+                console.error("Errore recupero news:", e);
+                // Messaggio di emergenza se internet fallisce
+                const emergenza = `<span class="news-item">ULTIME NOTIZIE NON DISPONIBILI - CONTROLLARE CONNESSIONE</span>`;
+                document.getElementById('ticker-content').innerHTML = emergenza + emergenza;
             }
         }
 
-        fetchNews();
-        setInterval(fetchNews, 900000); // Ogni 15 min
+        // Avvio
+        caricaNews();
+        // Aggiorna ogni 15 minuti
+        setInterval(caricaNews, 900000);
     </script>
 </body>
 </html>
