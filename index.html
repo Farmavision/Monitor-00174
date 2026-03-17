@@ -15,82 +15,8 @@
         /* LAYOUT */
         #header { height: 20vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 8px solid #00ff88; position: relative; flex-shrink: 0; }
         #container-main { height: 55vh; padding: 20px; overflow-y: auto; flex-grow: 1; }
-        #footer-promo { height: 25vh; background: white; color: #b91c1c; display: flex; justify-content: center; align-items: center; border-top: 8px solid #00ff88; flex-shrink: 0; }
-
-        /* HEADER & CROCI */
-        #clock { position: absolute; top: 10px; right: 20px; font-size: 1.8rem; color: #00ff88; font-family: monospace; }
-        #nome-farma { font-size: 2.8rem; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 20px; }
-        .croce { color: #00ff88; font-size: 1.1em; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
         
-        .aperto { background: #064e3b; }
-        .chiuso { background: #b91c1c; }
-        .chiuso .croce, .chiuso #clock { color: white !important; }
-
-        /* TITOLO SEZIONE TURNI */
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-
-        /* --- MODIFICA CARD: STRUTTURA A 3 RIGHE --- */
-        .card { 
-            background: #172a45; margin-bottom: 25px; padding: 20px; 
-            border-radius: 20px; border: 2px solid #233554; 
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .card-info { 
-            flex: 1; 
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            gap: 4px; /* Spazio bilanciato tra le righe */
-        }
-        /* Riga 1: Etichetta fissa */
-        .label-fisso { 
-            font-size: 1.1rem; 
-            color: #94a3b8; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
-        /* Riga 2: Nome dinamico */
-        .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; line-height: 1; }
-        /* Riga 3: Indirizzo dinamico */
-        .card p { 
-    font-size: 1.6rem; 
-    color: #cbd5e1; 
-    font-weight: 600; 
-    margin: 0; 
-    text-transform: lowercase; /* Trasforma tutto in minuscolo */
-}
-
-/* Questa riga forza la prima lettera dell'indirizzo in MAIUSCOLO */
-.card p::first-letter { 
-    text-transform: uppercase; 
-}
-
-        .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
-        .qr-wrapper img { width: 130px; height: 130px; display: block; }
-
-        #promo-text { font-size: 4.5rem; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1; }
-    </style>
-</head>
-<body>
-
-    <div id="header">
-        <div id="clock">--:--:--</div>
-        <h1 id="nome-farma">
-            <span class="croce">&#10010;</span>
-            <span id="txt-nome">RICERCA ID...</span>
-            <span class="croce">&#10010;</span>
-        </h1>
-        <div id="stato-orario" style="font-size:1.6rem; font-weight:bold; margin-top:5px;">SINCRONIZZAZIONE IN CORSO</div>
-    </div>
-
-    <div id="container-main">
-        <h2 id="titolo-turni">FARMACIE DI TURNO CHE PRESTANO SERVIZIO ASSISTENZIALE H24</h2>
-        <div id="body-turni"></div>
-    </div>
-
-    /* FOOTER DINAMICO */
+        /* FOOTER DINAMICO (Spostato correttamente qui nel CSS) */
         #footer-promo { 
             height: 25vh; 
             background: white; 
@@ -117,6 +43,57 @@
             text-transform: uppercase; 
             text-align: center;
         }
+
+        /* HEADER & CROCI */
+        #clock { position: absolute; top: 10px; right: 20px; font-size: 1.8rem; color: #00ff88; font-family: monospace; }
+        #nome-farma { font-size: 2.8rem; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 20px; }
+        .croce { color: #00ff88; font-size: 1.1em; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        
+        .aperto { background: #064e3b; }
+        .chiuso { background: #b91c1c; }
+        .chiuso .croce, .chiuso #clock { color: white !important; }
+
+        /* TITOLO SEZIONE TURNI */
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* CARD: STRUTTURA A 3 RIGHE */
+        .card { 
+            background: #172a45; margin-bottom: 25px; padding: 20px; 
+            border-radius: 20px; border: 2px solid #233554; 
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-info { 
+            flex: 1; text-align: left; display: flex; flex-direction: column; gap: 4px; 
+        }
+        .label-fisso { font-size: 1.1rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .card h3 { color: #00ff88; font-size: 2.3rem; text-transform: uppercase; margin: 0; line-height: 1; }
+        .card p { font-size: 1.6rem; color: #cbd5e1; font-weight: 600; margin: 0; text-transform: lowercase; }
+        .card p::first-letter { text-transform: uppercase; }
+
+        .qr-wrapper { background: white; padding: 8px; border-radius: 12px; margin-left: 20px; flex-shrink: 0; }
+        .qr-wrapper img { width: 130px; height: 130px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div id="clock">--:--:--</div>
+        <h1 id="nome-farma">
+            <span class="croce">&#10010;</span>
+            <span id="txt-nome">RICERCA ID...</span>
+            <span class="croce">&#10010;</span>
+        </h1>
+        <div id="stato-orario" style="font-size:1.6rem; font-weight:bold; margin-top:5px;">SINCRONIZZAZIONE IN CORSO</div>
+    </div>
+
+    <div id="container-main">
+        <h2 id="titolo-turni">FARMACIE DI TURNO CHE PRESTANO SERVIZIO ASSISTENZIALE H24</h2>
+        <div id="body-turni"></div>
+    </div>
+
+    <div id="footer-promo">
+        </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -145,7 +122,7 @@
             return false;
         }
 
-async function carica() {
+        async function carica() {
             const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
             try {
                 const res = await fetch(url + "&t=" + Date.now());
@@ -159,7 +136,6 @@ async function carica() {
                     const r = righe[i];
                     if (!r[1]) continue;
 
-                    // GESTIONE OWNER (IL TUO MONITOR)
                     if (r[0] === MIO_ID && r[17] === "O") {
                         document.getElementById('txt-nome').innerText = r[1];
                         const orario = (giorno === 0) ? r[14] : (giorno === 6 ? r[13] : r[12]);
@@ -167,20 +143,17 @@ async function carica() {
                         document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
                         document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
 
-                        // LOGICA FOOTER DINAMICO (Colonna F -> r[5])
+                        // GESTIONE FOOTER DINAMICO (Colonna F -> r[5])
                         const urlFooter = r[5]; 
                         const footerEl = document.getElementById('footer-promo');
                         
                         if (urlFooter && urlFooter.startsWith('http')) {
-                            // Se c'è un link, caricalo nell'iframe
                             footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
                         } else {
-                            // Se la cella è vuota, mostra testo di default
                             footerEl.innerHTML = `<div id="promo-text-fallback">BENVENUTI IN FARMACIA</div>`;
                         }
                     } 
                     
-                    // GESTIONE TURNI (BODY)
                     else if (r[17] === "T") {
                         const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(r[4])}"></div>` : "";
                         turniHtml += `
@@ -202,16 +175,6 @@ async function carica() {
             updateClock();
             carica();
             setInterval(carica, 45000);
-            
-            const promo = ["SCONTO 20% SOLARI", "PRESSIONE GRATUITA", "ECG IMMEDIATO"];
-            let pIdx = 0;
-            setInterval(() => {
-                const promoEl = document.getElementById('promo-text');
-                if (promoEl) {
-                    promoEl.innerText = promo[pIdx];
-                    pIdx = (pIdx + 1) % promo.length;
-                }
-            }, 5000);
         });
     </script>
 </body>
