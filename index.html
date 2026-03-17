@@ -143,15 +143,20 @@
                         document.getElementById('header').className = aperta ? 'aperto' : 'chiuso';
                         document.getElementById('stato-orario').innerText = aperta ? "APERTO: " + orario : "ATTUALMENTE CHIUSA";
 
-                        // GESTIONE FOOTER DINAMICO (Colonna F -> r[5])
-                        const urlFooter = r[5]; 
-                        const footerEl = document.getElementById('footer-promo');
-                        
-                        if (urlFooter && urlFooter.startsWith('http')) {
-                            footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
-                        } else {
-                            footerEl.innerHTML = `<div id="promo-text-fallback">BENVENUTI IN FARMACIA</div>`;
-                        }
+                      // GESTIONE FOOTER DINAMICO (Colonna F -> r[5])
+const urlFooter = r[5] ? r[5].trim() : ""; 
+const footerEl = document.getElementById('footer-promo');
+
+if (urlFooter.startsWith('http')) {
+    // Caso 1: È un link -> Carica Iframe
+    footerEl.innerHTML = `<iframe src="${urlFooter}" scrolling="no"></iframe>`;
+} else if (urlFooter.length > 0) {
+    // Caso 2: È testo semplice -> Scrivilo nel footer
+    footerEl.innerHTML = `<div id="promo-text-fallback">${urlFooter}</div>`;
+} else {
+    // Caso 3: La cella è vuota -> Messaggio standard
+    footerEl.innerHTML = `<div id="promo-text-fallback">BENVENUTI IN FARMACIA</div>`;
+}
                     } 
                     
                     else if (r[17] === "T") {
