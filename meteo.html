@@ -3,29 +3,27 @@
 <head>
     <meta charset="utf-8">
     <style>
-        /* Rimuoviamo ogni margine e forziamo l'altezza */
-        html, body { 
+        body, html { 
             margin: 0; 
             padding: 0; 
             height: 100%; 
             width: 100%; 
             overflow: hidden; 
-            background-color: #ffffff; /* Sfondo bianco per visibilità */
+            background-color: white; 
+        }
+        .weather-container {
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        .weather-container {
-            width: 90%; /* Lasciamo un po' di margine ai lati */
-            text-align: center;
-        }
-
-        /* Invece dello scale, usiamo uno zoom più compatibile */
+        /* Forza il widget a essere grande e visibile */
         .weatherwidget-io {
             display: block;
-            min-width: 100%;
-            zoom: 1.8; /* Zoom moderno meno problematico dello scale */
+            width: 90% !important;
+            min-height: 150px; /* Altezza minima per forzare il rendering */
+            transform: scale(2); /* Usiamo di nuovo scale ma con contenitore flessibile */
         }
     </style>
 </head>
@@ -42,14 +40,25 @@
            data-theme="pure" >ROMA METEO</a>
         
         <script>
-        !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
+        !function(d,s,id){
+            var js,fjs=d.getElementsByTagName(s)[0];
+            if(!d.getElementById(id)){
+                js=d.createElement(s);
+                js.id=id;
+                js.src='https://weatherwidget.io/js/widget.min.js';
+                fjs.parentNode.insertBefore(js,fjs);
+            }
+        }(document,'script','weatherwidget-io-js');
         </script>
     </div>
 
     <script>
-        if (typeof __weatherwidget_init === 'function') {
-            __weatherwidget_init();
-        }
+        // Forza il ricaricamento se il widget non appare dopo 2 secondi
+        setTimeout(function() {
+            if (typeof __weatherwidget_init === 'function') {
+                __weatherwidget_init();
+            }
+        }, 2000);
     </script>
 
 </body>
