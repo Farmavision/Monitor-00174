@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Farmacia Universale</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -34,35 +35,37 @@
             overflow: hidden;
         }
 
-       /* --- STILI HEADER AGGIORNATI --- */
-.label-static { 
-    font-size: 1.8rem; /* Leggermente più piccolo per dare enfasi al nome sotto */
-    color: #ffffff; 
-    font-weight: 800; 
-    text-transform: uppercase; 
-    letter-spacing: 2px; 
-    margin-bottom: -15px; /* <--- Aumentato il valore negativo per "tirare su" il nome */
-    opacity: 0.8; /* Un tocco di trasparenza per far risaltare il nome sotto */
-}
+        /* --- STILI HEADER --- */
+        #clock { font-size: 1.2rem; color: #00ff88; font-weight: bold; position: absolute; top: 10px; right: 20px; }
+        
+        .label-static { 
+            font-size: 1.6rem; 
+            color: #ffffff; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            margin-bottom: -10px;
+            opacity: 0.8;
+        }
 
-#txt-nome { 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: 30px; /* Ridotto il gap tra le croci e il testo */
-    font-size: 4.2rem; /* Leggermente più grande */
-    font-weight: 900; 
-    color: #ffffff; 
-    text-transform: uppercase; 
-    line-height: 1; /* Forza l'interlinea al minimo */
-    margin: 0; 
-}
+        #txt-nome { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 20px; 
+            font-size: 3.8rem; 
+            font-weight: 900; 
+            color: #ffffff; 
+            text-transform: uppercase; 
+            line-height: 1; 
+            margin: 5px 0;
+        }
 
-        .croce { color: #00ff88; font-size: 1.5em; animation: pulse-farmacia 2s infinite ease-in-out; }
+        .croce { color: #00ff88; font-size: 1.2em; animation: pulse-farmacia 2s infinite ease-in-out; }
         @keyframes pulse-farmacia { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
 
-        #stato-testo { font-size: 2.0rem; font-weight: 900; text-transform: uppercase; }
-        #orario-dettaglio { font-size: 1.2rem; color: #cbd5e1; font-weight: 600; }
+        #stato-testo { font-size: 1.8rem; font-weight: 900; text-transform: uppercase; }
+        #orario-dettaglio { font-size: 1.1rem; color: #cbd5e1; font-weight: 600; }
 
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; border-bottom-color: #ff4444 !important; }
@@ -70,18 +73,18 @@
         .testo-chiuso { color: #ffffff !important; }
         .chiuso .croce { color: white; }
 
-        /* --- CARD --- */
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.4rem; margin-bottom: 15px; }
+        /* --- CARD TURNI --- */
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.3rem; margin-bottom: 15px; text-transform: uppercase; }
         .card { background: #172a45; margin-bottom: 15px; padding: 15px; border-radius: 15px; border: 2px solid #233554; display: flex; align-items: center; }
         .card-info { flex: 1; }
-        .card h3 { color: #00ff88; font-size: 1.8rem; text-transform: uppercase; }
+        .card h3 { color: #00ff88; font-size: 1.8rem; text-transform: uppercase; margin-bottom: 5px; }
         .card p { font-size: 1.3rem; color: #cbd5e1; }
-        .qr-wrapper img { width: 90px; height: 90px; border-radius: 8px; }
+        .qr-wrapper img { width: 90px; height: 90px; border-radius: 8px; border: 2px solid white; }
     </style>
 </head>
 <body>
 
-    <div id="header" class="chiuso">
+    <div id="header">
         <div id="clock">--:--:--</div>
         <div class="label-static">FARMACIA</div>
         <div id="txt-nome">
@@ -94,20 +97,19 @@
     </div>
 
     <div id="container-main">
-        <h2 id="titolo-turni">FARMACIE DI TURNO CHE EFFETTUANO SERVIZIO ASSISTENZIALE H24 NELLE VICINANZE</h2>
+        <h2 id="titolo-turni">FARMACIE DI TURNO NELLE VICINANZE</h2>
         <div id="body-turni"></div>
     </div>
 
-    <div id="footer-promo"></div>
+    <div id="footer-promo">
+        <div style="color: #0a192f; font-weight: 900; font-size: 2rem;">IN ATTESA DATI...</div>
+    </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const MIO_ID = urlParams.get('id') || "RM002"; 
-
+        // --- CONFIGURAZIONE ---
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('it-IT'); }
         setInterval(updateClock, 1000);
 
-        // --- INIZIO MOTORE ORARI INTELLIGENTE ---
         const giorniSettimana = ["DOMENICA", "LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ", "GIOVEDÌ", "VENERDÌ", "SABATO"];
 
         function estraiOrarioDaCSV(r, indiceGiorno) {
@@ -123,7 +125,6 @@
             if (s.includes("H24") || s.includes("APERTO")) {
                 return [{ start: 0, end: 1440, strInizio: "00:00", strFine: "24:00", h24: true }];
             }
-            
             let fasce = [];
             let parti = s.split(',');
             for (let p of parti) {
@@ -143,162 +144,4 @@
             let adesso = new Date();
             let oraCorrente = adesso.getHours() * 60 + adesso.getMinutes();
             let indiceOggi = adesso.getDay();
-
-            let fasceOggi = parseFasce(estraiOrarioDaCSV(r, indiceOggi));
-
-            // FASE 1: Controllo se è aperto ORA
-            for (let f of fasceOggi) {
-                if (f.h24) return { aperta: true, stato: "APERTO H24", dettaglio: "SERVIZIO CONTINUATO" };
-                if (oraCorrente >= f.start && oraCorrente < f.end) {
-                    return { aperta: true, stato: "APERTO", dettaglio: "APERTO FINO ALLE " + f.strFine };
-                }
-            }
-
-            // FASE 2: Chiuso, ma riapre OGGI (es. pausa pranzo)
-            for (let f of fasceOggi) {
-                if (f.start > oraCorrente) {
-                    return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "RIAPRE ALLE ORE " + f.strInizio };
-                }
-            }
-
-            // FASE 3: Chiusura serale o festiva -> Cerco il primo giorno utile nei prossimi 7 giorni
-            for (let i = 1; i <= 7; i++) {
-                let prossimoGiorno = (indiceOggi + i) % 7;
-                let fasceFuture = parseFasce(estraiOrarioDaCSV(r, prossimoGiorno));
-
-                if (fasceFuture.length > 0) {
-                    let nomeGiorno = (i === 1) ? "DOMANI" : giorniSettimana[prossimoGiorno];
-                    return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "RIAPRE " + nomeGiorno + " ALLE ORE " + fasceFuture[0].strInizio };
-                }
-            }
-
-            // Fallback estremo
-            return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "NESSUN ORARIO DISPONIBILE" };
-        }
-        // --- FINE MOTORE ORARI ---
-
-        async function carica() {
-    // 1. Recupero dinamico dei parametri dall'URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const MIO_ID = urlParams.get('id') || "RM002";  // ID della farmacia (es. RM002)
-    const MIO_GID = urlParams.get('gid') || "0";    // GID del foglio CAP (es. 123456)
-
-    // 2. Costruzione URL Universale (punta al tuo file Master)
-    const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub";
-    const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
-
-    try {
-        // Fetch con anti-cache (t=Date.now) per forzare dati freschi
-        const res = await fetch(urlCompleto + "&t=" + Date.now());
-        const txt = await res.text();
-        
-        // Parsing professionale del CSV
-        const righe = txt.split(/\r?\n/).map(r => 
-            r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-             .map(v => v.replace(/^"|"$/g, '').trim())
-        );
-        
-        let turniHtml = "";
-        let ownerTrovato = false;
-
-        for (let i = 1; i < righe.length; i++) {
-            const r = righe[i];
-            if (!r[1]) continue;
-
-            // --- LOGICA OWNER (La farmacia proprietaria del monitor) ---
-            if (r[0] === MIO_ID && r[17] === "O") {
-                ownerTrovato = true;
-                document.getElementById('nome-testo-dinamico').innerText = r[1];
-                
-                // Motore Orari Intelligente
-                const statoFarmacia = calcolaStatoApertura(r);
-                const headerEl = document.getElementById('header');
-                const statoEl = document.getElementById('stato-testo');
-                const dettEl = document.getElementById('orario-dettaglio');
-
-                if (statoFarmacia.aperta) {
-                    headerEl.className = "aperto";
-                    statoEl.innerText = statoFarmacia.stato;
-                    statoEl.className = "testo-aperto";
-                    dettEl.innerText = statoFarmacia.dettaglio;
-                } else {
-                    headerEl.className = "chiuso";
-                    statoEl.innerText = statoFarmacia.stato;
-                    statoEl.className = "testo-chiuso";
-                    dettEl.innerText = statoFarmacia.dettaglio;
-                }
-
-                // Gestione Footer Dinamico (Player)
-                const comandoCSV = r[5] ? r[5].trim() : ""; 
-                const footerEl = document.getElementById('footer-promo');
-                if (comandoCSV !== "") {
-                    const urlPlayer = `player.html?data=${encodeURIComponent(comandoCSV)}`;
-                    footerEl.innerHTML = `<iframe src="${urlPlayer}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
-                } else {
-                    footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
-                }
-            } 
-            // --- LOGICA TURNI (Le altre farmacie dello stesso CAP/Foglio) ---
-            else if (r[17] === "T") {
-                const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
-                turniHtml += `
-                    <div class="card">
-                        <div class="card-info">
-                            <div style="font-size:
-                        // --- NUOVO CODICE PROFESSIONALE (PLAYER UNIVERSALE) ---
-// Gestione Footer tramite Player Esterno
-const comandoCSV = r[5] ? r[5].trim() : ""; 
-const footerEl = document.getElementById('footer-promo');
-
-if (comandoCSV !== "") {
-    // Se la cella non è vuota, carichiamo il player.html passandogli il comando
-    // Questo gestirà automaticamente canva:, video:, o img:
-    const urlPlayer = `player.html?data=${encodeURIComponent(comandoCSV)}`;
-    
-    footerEl.innerHTML = `
-        <iframe src="${urlPlayer}" 
-                style="width:100%; height:100%; border:none;" 
-                allow="autoplay; fullscreen">
-        </iframe>`;
-} else {
-    // Se la cella nel CSV è vuota, mostriamo il messaggio di benvenuto standard
-    footerEl.innerHTML = `
-        <div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">
-            BENVENUTI
-        </div>`;
-}
-                    } 
-                    // CONTROLLO TURNI
-                    else if (r[17] === "T") {
-                        const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
-                        turniHtml += `
-                            <div class="card">
-                                <div class="card-info">
-                                    <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA</div>
-                                    <h3>${r[1]}</h3>
-                                    <p>${r[2]}</p>
-                                </div>
-                                ${qr}
-                            </div>`;
-                    }
-                }
-
-                if (!ownerTrovato) {
-                    document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
-                }
-
-                document.getElementById('body-turni').innerHTML = turniHtml;
-            } catch(e) { 
-                console.error("Errore:", e); 
-                document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            updateClock();
-            carica();
-            setInterval(carica, 45000);
-        });
-    </script>
-</body>
-</html>
+            let fasceOggi = parseFasce(estraiOrarioDaCSV(r,
