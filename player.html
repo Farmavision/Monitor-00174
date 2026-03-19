@@ -2,52 +2,33 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; color: white; font-family: sans-serif; }
-        #display { width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .content-frame { width: 100%; height: 100%; border: none; }
-        video, img { object-fit: cover; width: 100%; height: 100%; }
-        .debug-msg { color: #555; font-size: 0.8rem; text-align: center; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; }
+        #display { width: 100%; height: 100vh; }
+        .content-frame { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
-    <div id="display">
-        <div class="debug-msg">In attesa di dati...</div>
-    </div>
+    <div id="display"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const rawData = params.get('data'); 
+        const data = params.get('data'); 
         const display = document.getElementById('display');
 
-        if (rawData) {
-            const data = rawData.trim();
-            const dataLower = data.toLowerCase();
-
-            // CASO 1: CANVA
-            if (dataLower.startsWith('canva:')) {
-                const id = data.split(':')[1].trim();
-                display.innerHTML = `<iframe class="content-frame" src="https://www.canva.com/design/${id}/view?embed" allow="autoplay" referrerpolicy="no-referrer"></iframe>`;
-            } 
-            // CASO 2: VIDEO
-            else if (dataLower.startsWith('video:')) {
-                const url = data.substring(6).trim(); // Prende tutto dopo "video:"
-                display.innerHTML = `<video autoplay muted loop playsinline><source src="${url}" type="video/mp4"></video>`;
-            }
-            // CASO 3: IMMAGINE
-            else if (dataLower.startsWith('img:')) {
-                const url = data.substring(4).trim(); // Prende tutto dopo "img:"
-                display.innerHTML = `<img src="${url}">`;
-            }
-            // CASO 4: LINK DIRETTO (per sicurezza)
-            else if (data.startsWith('http')) {
-                display.innerHTML = `<iframe class="content-frame" src="${data}" allow="autoplay"></iframe>`;
-            }
-            else {
-                display.innerHTML = `<div class="debug-msg">Comando non riconosciuto: ${data}</div>`;
-            }
-        } else {
-            display.innerHTML = `<div class="debug-msg">Nessun dato ricevuto nell'URL</div>`;
+        if (data && data.startsWith('canva:')) {
+            const id = data.split(':')[1].trim();
+            // L'attributo referrerpolicy="no-referrer" è fondamentale qui
+            display.innerHTML = `
+                <iframe class="content-frame" 
+                        src="https://www.canva.com/design/${id}/view?embed" 
+                        allow="autoplay" 
+                        referrerpolicy="no-referrer">
+                </iframe>`;
+        } else if (data) {
+            // Fallback per link diretti se non iniziano con canva:
+            display.innerHTML = `<iframe class="content-frame" src="${data}" referrerpolicy="no-referrer"></iframe>`;
         }
     </script>
 </body>
