@@ -216,14 +216,28 @@
                             dettEl.innerText = statoFarmacia.dettaglio;
                         }
 
-                        // Gestione Footer
-                        const urlFooter = r[5] ? r[5].trim() : ""; 
-                        const footerEl = document.getElementById('footer-promo');
-                        if (urlFooter.startsWith('http')) {
-                            footerEl.innerHTML = `<iframe src="${urlFooter}" style="width:100%; height:100%; border:none;"></iframe>`;
-                        } else {
-                            footerEl.innerHTML = `<div style="font-size:2rem; font-weight:900; color:#b91c1c;">${urlFooter || "BENVENUTI"}</div>`;
-                        }
+                        // --- NUOVO CODICE PROFESSIONALE (PLAYER UNIVERSALE) ---
+// Gestione Footer tramite Player Esterno
+const comandoCSV = r[5] ? r[5].trim() : ""; 
+const footerEl = document.getElementById('footer-promo');
+
+if (comandoCSV !== "") {
+    // Se la cella non è vuota, carichiamo il player.html passandogli il comando
+    // Questo gestirà automaticamente canva:, video:, o img:
+    const urlPlayer = `player.html?data=${encodeURIComponent(comandoCSV)}`;
+    
+    footerEl.innerHTML = `
+        <iframe src="${urlPlayer}" 
+                style="width:100%; height:100%; border:none;" 
+                allow="autoplay; fullscreen">
+        </iframe>`;
+} else {
+    // Se la cella nel CSV è vuota, mostriamo il messaggio di benvenuto standard
+    footerEl.innerHTML = `
+        <div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">
+            BENVENUTI
+        </div>`;
+}
                     } 
                     // CONTROLLO TURNI
                     else if (r[17] === "T") {
