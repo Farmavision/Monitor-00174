@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Forza il contenuto a riempire il 32% del footer senza bordi */
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; }
+        .content-frame { width: 100%; height: 100%; border: none; display: block; object-fit: cover; }
+    </style>
+</head>
+<body>
+    <div id="display"></div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const data = params.get('data'); // Legge il comando dal CSV
+        const display = document.getElementById('display');
+
+        if (data) {
+            if (data.startsWith('canva:')) {
+                const id = data.split(':')[1];
+                display.innerHTML = `<iframe class="content-frame" src="https://www.canva.com/design/${id}/view?embed" allow="autoplay" referrerpolicy="no-referrer"></iframe>`;
+            } 
+            else if (data.startsWith('video:')) {
+                const url = data.split(':')[1];
+                display.innerHTML = `<video class="content-frame" autoplay muted loop playsinline><source src="${url}" type="video/mp4"></video>`;
+            }
+            else if (data.startsWith('img:')) {
+                const url = data.split(':')[1];
+                display.innerHTML = `<img class="content-frame" src="${url}">`;
+            }
+        }
+    </script>
+</body>
+</html>
