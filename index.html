@@ -178,44 +178,73 @@
         // --- FINE MOTORE ORARI ---
 
         async function carica() {
-            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=0&single=true&output=csv";
-            try {
-                const res = await fetch(url + "&t=" + Date.now());
-                const txt = await res.text();
-                const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
+    // 1. Recupero dinamico dei parametri dall'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const MIO_ID = urlParams.get('id') || "RM002";  // ID della farmacia (es. RM002)
+    const MIO_GID = urlParams.get('gid') || "0";    // GID del foglio CAP (es. 123456)
+
+    // 2. Costruzione URL Universale (punta al tuo file Master)
+    const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub";
+    const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
+
+    try {
+        // Fetch con anti-cache (t=Date.now) per forzare dati freschi
+        const res = await fetch(urlCompleto + "&t=" + Date.now());
+        const txt = await res.text();
+        
+        // Parsing professionale del CSV
+        const righe = txt.split(/\r?\n/).map(r => 
+            r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+             .map(v => v.replace(/^"|"$/g, '').trim())
+        );
+        
+        let turniHtml = "";
+        let ownerTrovato = false;
+
+        for (let i = 1; i < righe.length; i++) {
+            const r = righe[i];
+            if (!r[1]) continue;
+
+            // --- LOGICA OWNER (La farmacia proprietaria del monitor) ---
+            if (r[0] === MIO_ID && r[17] === "O") {
+                ownerTrovato = true;
+                document.getElementById('nome-testo-dinamico').innerText = r[1];
                 
-                let turniHtml = "";
-                let ownerTrovato = false;
+                // Motore Orari Intelligente
+                const statoFarmacia = calcolaStatoApertura(r);
+                const headerEl = document.getElementById('header');
+                const statoEl = document.getElementById('stato-testo');
+                const dettEl = document.getElementById('orario-dettaglio');
 
-                for (let i = 1; i < righe.length; i++) {
-                    const r = righe[i];
-                    if (!r[1]) continue;
+                if (statoFarmacia.aperta) {
+                    headerEl.className = "aperto";
+                    statoEl.innerText = statoFarmacia.stato;
+                    statoEl.className = "testo-aperto";
+                    dettEl.innerText = statoFarmacia.dettaglio;
+                } else {
+                    headerEl.className = "chiuso";
+                    statoEl.innerText = statoFarmacia.stato;
+                    statoEl.className = "testo-chiuso";
+                    dettEl.innerText = statoFarmacia.dettaglio;
+                }
 
-                    // CONTROLLO OWNER
-                    if (r[0] === MIO_ID && r[17] === "O") {
-                        ownerTrovato = true;
-                        document.getElementById('nome-testo-dinamico').innerText = r[1];
-                        
-                        // Richiamo il nuovo motore intelligente
-                        const statoFarmacia = calcolaStatoApertura(r);
-                        
-                        const headerEl = document.getElementById('header');
-                        const statoEl = document.getElementById('stato-testo');
-                        const dettEl = document.getElementById('orario-dettaglio');
-
-                        // Applicazione Classi e Testi Dinamici
-                        if (statoFarmacia.aperta) {
-                            headerEl.className = "aperto";
-                            statoEl.innerText = statoFarmacia.stato;
-                            statoEl.className = "testo-aperto";
-                            dettEl.innerText = statoFarmacia.dettaglio;
-                        } else {
-                            headerEl.className = "chiuso";
-                            statoEl.innerText = statoFarmacia.stato;
-                            statoEl.className = "testo-chiuso";
-                            dettEl.innerText = statoFarmacia.dettaglio;
-                        }
-
+                // Gestione Footer Dinamico (Player)
+                const comandoCSV = r[5] ? r[5].trim() : ""; 
+                const footerEl = document.getElementById('footer-promo');
+                if (comandoCSV !== "") {
+                    const urlPlayer = `player.html?data=${encodeURIComponent(comandoCSV)}`;
+                    footerEl.innerHTML = `<iframe src="${urlPlayer}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                } else {
+                    footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
+                }
+            } 
+            // --- LOGICA TURNI (Le altre farmacie dello stesso CAP/Foglio) ---
+            else if (r[17] === "T") {
+                const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
+                turniHtml += `
+                    <div class="card">
+                        <div class="card-info">
+                            <div style="font-size:
                         // --- NUOVO CODICE PROFESSIONALE (PLAYER UNIVERSALE) ---
 // Gestione Footer tramite Player Esterno
 const comandoCSV = r[5] ? r[5].trim() : ""; 
