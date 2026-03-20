@@ -60,7 +60,26 @@
             line-height: 1; 
             margin: 5px 0;
         }
+/* --- SUPPORTO ORIENTAMENTO VERTICALE --- */
+        body.v { flex-direction: column; }
+        
+        body.v #header { 
+            flex: 0 0 22vh; /* Leggermente più alto per bilanciare il rettangolo stretto */
+            padding: 10px;
+        }
 
+        body.v #txt-nome { 
+            font-size: 2.8rem; /* Ridotto per non uscire dai bordi in verticale */
+            text-align: center;
+            flex-wrap: wrap;
+            line-height: 1.1;
+        }
+
+        body.v #container-main { flex: 0 0 48vh; }
+        body.v #footer-promo { flex: 0 0 30vh; }
+
+        body.v .card h3 { font-size: 1.5rem; } /* Adattamento card per schermi stretti */
+        body.v .card p { font-size: 1.1rem; }
         .croce { color: #00ff88; font-size: 1.2em; animation: pulse-farmacia 2s infinite ease-in-out; }
         @keyframes pulse-farmacia { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
 
