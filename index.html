@@ -7,29 +7,18 @@
     <title>Monitor Farmacia Universale</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
         body { 
-            background-color: #0a192f; 
-            color: white; 
-            height: 100vh; 
-            width: 100vw;
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden;
+            background-color: #0a192f; color: white; 
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; overflow: hidden;
             font-family: 'Segoe UI', sans-serif;
-            /* Rende il mouse invisibile senza bloccare gli eventi */
-            cursor: none !important; 
         }
 
         /* --- LAYOUT 18-50-32 --- */
         #header { 
             flex: 0 0 18vh; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            border-bottom: 6px solid #00ff88; 
-            position: relative;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            border-bottom: 6px solid #00ff88; position: relative;
             padding: 5px 0;
             transition: background-color 0.5s ease;
         }
@@ -44,9 +33,7 @@
             flex: 0 0 32vh; 
             width: 100%;
             background-color: white; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
 
@@ -79,41 +66,50 @@
 
         /* --- SUPPORTO ORIENTAMENTO VERTICALE --- */
         body.v { flex-direction: column; }
-        body.v #header { flex: 0 0 22vh; padding: 10px; }
-        body.v #txt-nome { font-size: 2.8rem; text-align: center; flex-wrap: wrap; line-height: 1.1; }
+        
+        body.v #header { 
+            flex: 0 0 22vh; 
+            padding: 10px;
+        }
+
+        body.v #txt-nome { 
+            font-size: 2.8rem; 
+            text-align: center;
+            flex-wrap: wrap;
+            line-height: 1.1;
+        }
+
         body.v #container-main { flex: 0 0 48vh; }
         body.v #footer-promo { flex: 0 0 30vh; }
 
-        /* --- CARD TURNI --- */
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.3rem; margin-bottom: 15px; text-transform: uppercase; }
-        .card { 
-            background: #172a45; 
-            margin-bottom: 15px; 
-            padding: 15px; 
-            border-radius: 15px; 
-            border: 2px solid #233554; 
-            display: flex; 
-            align-items: center; 
-        }
-        .card-info { flex: 1; }
-        .card h3 { color: #00ff88; font-size: 1.8rem; text-transform: uppercase; margin-bottom: 5px; }
-        .card p { font-size: 1.3rem; color: #cbd5e1; }
-        .qr-wrapper img { width: 90px; height: 90px; border-radius: 8px; border: 2px solid white; }
+        body.v .card h3 { font-size: 1.5rem; } 
+        body.v .card p { font-size: 1.1rem; }
 
-        /* --- ANIMAZIONI E STATI --- */
         .croce { color: #00ff88; font-size: 1.2em; animation: pulse-farmacia 2s infinite ease-in-out; }
         @keyframes pulse-farmacia { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
 
         #stato-testo { font-size: 1.8rem; font-weight: 900; text-transform: uppercase; }
         #orario-dettaglio { font-size: 1.1rem; color: #cbd5e1; font-weight: 600; }
 
+        /* Stati di colore Header */
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; border-bottom-color: #ff4444 !important; }
-        .errore-rete { background: #333333; border-bottom-color: #777777 !important; }
+        .errore-rete { background: #333333; border-bottom-color: #777777 !important; } /* Colore neutro per offline */
         
         .testo-aperto { color: #00ff88 !important; }
         .testo-chiuso { color: #ffffff !important; }
         .testo-errore { color: #ffcc00 !important; }
+        
+        .chiuso .croce { color: white; }
+        .errore-rete .croce { color: #777777; animation: none; }
+
+        /* --- CARD TURNI --- */
+        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.3rem; margin-bottom: 15px; text-transform: uppercase; }
+        .card { background: #172a45; margin-bottom: 15px; padding: 15px; border-radius: 15px; border: 2px solid #233554; display: flex; align-items: center; }
+        .card-info { flex: 1; }
+        .card h3 { color: #00ff88; font-size: 1.8rem; text-transform: uppercase; margin-bottom: 5px; }
+        .card p { font-size: 1.3rem; color: #cbd5e1; }
+        .qr-wrapper img { width: 90px; height: 90px; border-radius: 8px; border: 2px solid white; }
     </style>
 </head>
 <body>
@@ -140,70 +136,173 @@
     </div>
 
     <script>
-        // Funzione Clock
         function updateClock() { 
             const ora = new Date().toLocaleTimeString('it-IT');
             if(document.getElementById('clock')) document.getElementById('clock').innerText = ora; 
         }
         setInterval(updateClock, 1000);
 
-        // Funzioni Logica Orari (Semplificate per stabilità)
         const giorniSettimana = ["DOMENICA", "LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ", "GIOVEDÌ", "VENERDÌ", "SABATO"];
 
         function estraiOrarioDaCSV(r, indiceGiorno) {
-            return (indiceGiorno === 0) ? r[14] : (indiceGiorno === 6) ? r[13] : r[12]; 
+            if (indiceGiorno === 0) return r[14]; 
+            if (indiceGiorno === 6) return r[13]; 
+            return r[12]; 
         }
 
         function parseFasce(orarioStr) {
             if (!orarioStr) return [];
             let s = orarioStr.toUpperCase().trim();
             if (s.includes("CHIUSO")) return [];
-            if (s.includes("H24") || s.includes("APERTO")) return [{ start: 0, end: 1440, strInizio: "00:00", strFine: "24:00", h24: true }];
+            if (s.includes("H24") || s.includes("APERTO")) {
+                return [{ start: 0, end: 1440, strInizio: "00:00", strFine: "24:00", h24: true }];
+            }
             let fasce = [];
             let parti = s.split(',');
             for (let p of parti) {
                 let ore = p.split('-');
                 if (ore.length === 2) {
-                    let startMin = parseInt(ore[0].split(':')[0]) * 60 + (parseInt(ore[0].split(':')[1]) || 0);
-                    let endMin = parseInt(ore[1].split(':')[0]) * 60 + (parseInt(ore[1].split(':')[1]) || 0);
-                    fasce.push({ start: startMin, end: endMin, strInizio: ore[0].trim(), strFine: ore[1].trim() });
+                    let startStr = ore[0].trim();
+                    let endStr = ore[1].trim();
+                    let startMin = parseInt(startStr.split(':')[0]) * 60 + (parseInt(startStr.split(':')[1]) || 0);
+                    let endMin = parseInt(endStr.split(':')[0]) * 60 + (parseInt(endStr.split(':')[1]) || 0);
+                    fasce.push({ start: startMin, end: endMin, strInizio: startStr, strFine: endStr });
                 }
             }
             return fasce.sort((a,b) => a.start - b.start);
         }
 
+        function calcolaStatoApertura(r) {
+            let adesso = new Date();
+            let oraCorrente = adesso.getHours() * 60 + adesso.getMinutes();
+            let indiceOggi = adesso.getDay();
+            let fasceOggi = parseFasce(estraiOrarioDaCSV(r, indiceOggi));
+
+            for (let f of fasceOggi) {
+                if (f.h24) return { aperta: true, stato: "APERTO H24", dettaglio: "SERVIZIO CONTINUATO" };
+                if (oraCorrente >= f.start && oraCorrente < f.end) {
+                    return { aperta: true, stato: "APERTO", dettaglio: "APERTO FINO ALLE " + f.strFine };
+                }
+            }
+            for (let f of fasceOggi) {
+                if (f.start > oraCorrente) {
+                    return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "RIAPRE ALLE ORE " + f.strInizio };
+                }
+            }
+            for (let i = 1; i <= 7; i++) {
+                let prossimoGiorno = (indiceOggi + i) % 7;
+                let fasceFuture = parseFasce(estraiOrarioDaCSV(r, prossimoGiorno));
+                if (fasceFuture.length > 0) {
+                    let nomeGiorno = (i === 1) ? "DOMANI" : giorniSettimana[prossimoGiorno];
+                    return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "RIAPRE " + nomeGiorno + " ALLE ORE " + fasceFuture[0].strInizio };
+                }
+            }
+            return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "CONSULTARE ORARI" };
+        }
+
         async function carica() {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('dir') === "v") document.body.classList.add('v');
+            
+            // --- GESTIONE ORIENTAMENTO ---
+            const MIO_DIR = urlParams.get('dir') || "h"; 
+            if (MIO_DIR === "v") {
+                document.body.classList.add('v');
+            } else {
+                document.body.classList.remove('v');
+            }
 
             const MIO_ID = urlParams.get('id') || "RM002"; 
             const MIO_GID = urlParams.get('gid') || "0"; 
-            const urlCompleto = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub?gid=${MIO_GID}&single=true&output=csv&t=${Date.now()}`;
+
+            const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub";
+            const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
 
             try {
-                const res = await fetch(urlCompleto);
+                // Generazione di un timestamp per eludere rigorosamente la cache
+                const res = await fetch(urlCompleto + "&t=" + Date.now());
+                if (!res.ok) throw new Error("Risposta non OK dal server Google");
+                
                 const txt = await res.text();
-                const righe = txt.split(/\r?\n/).map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim()));
+                
+                const righe = txt.split(/\r?\n/).map(r => 
+                    r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                     .map(v => v.replace(/^"|"$/g, '').trim())
+                );
                 
                 let turniHtml = "";
                 let ownerTrovato = false;
 
                 for (let i = 1; i < righe.length; i++) {
                     const r = righe[i];
+                    if (!r[1]) continue;
+
                     if (r[0] === MIO_ID && r[17] === "O") {
                         ownerTrovato = true;
                         document.getElementById('nome-testo-dinamico').innerText = r[1];
+                        
+                        const statoFarmacia = calcolaStatoApertura(r);
+                        const headerEl = document.getElementById('header');
+                        const statoEl = document.getElementById('stato-testo');
+                        const dettEl = document.getElementById('orario-dettaglio');
+
+                        headerEl.className = statoFarmacia.aperta ? "aperto" : "chiuso";
+                        statoEl.innerText = statoFarmacia.stato;
+                        statoEl.className = statoFarmacia.aperta ? "testo-aperto" : "testo-chiuso";
+                        dettEl.innerText = statoFarmacia.dettaglio;
+
+                        const comandoCSV = r[5] ? r[5].trim() : ""; 
                         const footerEl = document.getElementById('footer-promo');
-                        footerEl.innerHTML = r[5] ? `<iframe src="player.html?data=${encodeURIComponent(r[5])}" style="width:100%; height:100%; border:none;"></iframe>` : `<div style="font-size:3.5rem; font-weight:900; color:#0a192f;">BENVENUTI</div>`;
-                    } else if (r[17] === "T") {
-                        turniHtml += `<div class="card"><div class="card-info"><h3>${r[1]}</h3><p>${r[2]}</p></div></div>`;
+                        if (comandoCSV !== "") {
+                            footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                        } else {
+                            footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
+                        }
+                    } 
+                    else if (r[17] === "T") {
+                        const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
+                        turniHtml += `
+                            <div class="card">
+                                <div class="card-info">
+                                    <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA DI TURNO</div>
+                                    <h3>${r[1]}</h3>
+                                    <p>${r[2]}</p>
+                                </div>
+                                ${qr}
+                            </div>`;
                     }
                 }
+
+                if (!ownerTrovato) {
+                    document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
+                    document.getElementById('header').className = "errore-rete";
+                    document.getElementById('stato-testo').innerText = "---";
+                    document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID";
+                }
+                
                 document.getElementById('body-turni').innerHTML = turniHtml;
-            } catch(e) { console.error(e); }
+
+            } catch(e) { 
+                console.error("Errore di Rete:", e); 
+                
+                // GESTIONE ERRORE PULITA: Spegne i colori fasulli e avvisa l'utente
+                document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
+                document.getElementById('header').className = "errore-rete";
+                document.getElementById('stato-testo').innerText = "OFFLINE";
+                document.getElementById('stato-testo').className = "testo-errore";
+                document.getElementById('orario-dettaglio').innerText = "In attesa di rete o aggiornamento dati...";
+                
+                // Evita di mostrare turni che potrebbero essere scaduti o errati
+                document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Riconnessione in corso...</h3>`;
+            }
         }
 
-        window.onload = () => { updateClock(); carica(); setInterval(carica, 60000); };
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            carica();
+            
+            // Aggiornamento silenzioso dei dati in background
+            setInterval(carica, 50000); 
+        });
     </script>
 </body>
 </html>
