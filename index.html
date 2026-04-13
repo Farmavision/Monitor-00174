@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="900">
     <title>Monitor Farmacia Universale</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -94,7 +93,7 @@
         /* Stati di colore Header */
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; border-bottom-color: #ff4444 !important; }
-        .errore-rete { background: #333333; border-bottom-color: #777777 !important; } /* Colore neutro per offline */
+        .errore-rete { background: #333333; border-bottom-color: #ffcc00 !important; } 
         
         .testo-aperto { color: #00ff88 !important; }
         .testo-chiuso { color: #ffffff !important; }
@@ -200,6 +199,85 @@
             return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "CONSULTARE ORARI" };
         }
 
+        // Funzione per ripulire l'HTML prevenendo XSS (iniezione di codice malevolo)
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        // --- NUOVA FUNZIONE: Estrae la logica di parsing in modo da poter essere usata sia per i dati online che offline ---
+        function processaDatiCSV(txt, isOffline = false) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const MIO_ID = urlParams.get('id') || "RM002"; 
+
+            const righe = txt.split(/\r?\n/).map(r => 
+                r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                 .map(v => v.replace(/^"|"$/g, '').trim())
+            );
+            
+            let turniHtml = "";
+            let ownerTrovato = false;
+
+            for (let i = 1; i < righe.length; i++) {
+                const r = righe[i];
+                if (!r[1]) continue;
+
+                if (r[0] === MIO_ID && r[17] === "O") {
+                    ownerTrovato = true;
+                    document.getElementById('nome-testo-dinamico').innerText = r[1];
+                    
+                    const statoFarmacia = calcolaStatoApertura(r);
+                    const headerEl = document.getElementById('header');
+                    const statoEl = document.getElementById('stato-testo');
+                    const dettEl = document.getElementById('orario-dettaglio');
+
+                    // Imposta i colori in base allo stato
+                    headerEl.className = statoFarmacia.aperta ? "aperto" : "chiuso";
+                    
+                    statoEl.innerText = statoFarmacia.stato;
+                    statoEl.className = statoFarmacia.aperta ? "testo-aperto" : "testo-chiuso";
+                    
+                    // Se siamo offline, avvisa l'utente affianco all'orario
+                    dettEl.innerText = statoFarmacia.dettaglio + (isOffline ? " [MODALITÀ OFFLINE]" : "");
+
+                    const comandoCSV = r[5] ? r[5].trim() : ""; 
+                    const footerEl = document.getElementById('footer-promo');
+                    if (comandoCSV !== "") {
+                        footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                    } else {
+                        footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
+                    }
+                } 
+                else if (r[17] === "T") {
+                    const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
+                    
+                    // Protezione XSS sui campi testuali liberi
+                    const nomeT = escapeHTML(r[1]);
+                    const indT = escapeHTML(r[2]);
+
+                    turniHtml += `
+                        <div class="card">
+                            <div class="card-info">
+                                <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA DI TURNO</div>
+                                <h3>${nomeT}</h3>
+                                <p>${indT}</p>
+                            </div>
+                            ${qr}
+                        </div>`;
+                }
+            }
+
+            if (!ownerTrovato) {
+                document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
+                document.getElementById('header').className = "errore-rete";
+                document.getElementById('stato-testo').innerText = "---";
+                document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID";
+            }
+            
+            document.getElementById('body-turni').innerHTML = turniHtml;
+        }
+
         async function carica() {
             const urlParams = new URLSearchParams(window.location.search);
             
@@ -211,88 +289,44 @@
                 document.body.classList.remove('v');
             }
 
-            const MIO_ID = urlParams.get('id') || "RM002"; 
             const MIO_GID = urlParams.get('gid') || "0"; 
 
             const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub";
             const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
 
             try {
-                // Generazione di un timestamp per eludere rigorosamente la cache
+                // Fetch con timestamp per eludere la cache del browser
                 const res = await fetch(urlCompleto + "&t=" + Date.now());
                 if (!res.ok) throw new Error("Risposta non OK dal server Google");
                 
                 const txt = await res.text();
                 
-                const righe = txt.split(/\r?\n/).map(r => 
-                    r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-                     .map(v => v.replace(/^"|"$/g, '').trim())
-                );
+                // --- SALVATAGGIO IN LOCAL STORAGE (CACHE) ---
+                localStorage.setItem('cacheFarmacia', txt);
                 
-                let turniHtml = "";
-                let ownerTrovato = false;
-
-                for (let i = 1; i < righe.length; i++) {
-                    const r = righe[i];
-                    if (!r[1]) continue;
-
-                    if (r[0] === MIO_ID && r[17] === "O") {
-                        ownerTrovato = true;
-                        document.getElementById('nome-testo-dinamico').innerText = r[1];
-                        
-                        const statoFarmacia = calcolaStatoApertura(r);
-                        const headerEl = document.getElementById('header');
-                        const statoEl = document.getElementById('stato-testo');
-                        const dettEl = document.getElementById('orario-dettaglio');
-
-                        headerEl.className = statoFarmacia.aperta ? "aperto" : "chiuso";
-                        statoEl.innerText = statoFarmacia.stato;
-                        statoEl.className = statoFarmacia.aperta ? "testo-aperto" : "testo-chiuso";
-                        dettEl.innerText = statoFarmacia.dettaglio;
-
-                        const comandoCSV = r[5] ? r[5].trim() : ""; 
-                        const footerEl = document.getElementById('footer-promo');
-                        if (comandoCSV !== "") {
-                            footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
-                        } else {
-                            footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
-                        }
-                    } 
-                    else if (r[17] === "T") {
-                        const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
-                        turniHtml += `
-                            <div class="card">
-                                <div class="card-info">
-                                    <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA DI TURNO</div>
-                                    <h3>${r[1]}</h3>
-                                    <p>${r[2]}</p>
-                                </div>
-                                ${qr}
-                            </div>`;
-                    }
-                }
-
-                if (!ownerTrovato) {
-                    document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
-                    document.getElementById('header').className = "errore-rete";
-                    document.getElementById('stato-testo').innerText = "---";
-                    document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID";
-                }
-                
-                document.getElementById('body-turni').innerHTML = turniHtml;
+                // Processa i dati normalmente
+                processaDatiCSV(txt, false);
 
             } catch(e) { 
                 console.error("Errore di Rete:", e); 
                 
-                // GESTIONE ERRORE PULITA: Spegne i colori fasulli e avvisa l'utente
-                document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
-                document.getElementById('header').className = "errore-rete";
-                document.getElementById('stato-testo').innerText = "OFFLINE";
-                document.getElementById('stato-testo').className = "testo-errore";
-                document.getElementById('orario-dettaglio').innerText = "In attesa di rete o aggiornamento dati...";
+                // --- TENTATIVO DI RECUPERO DA CACHE ---
+                const txtCache = localStorage.getItem('cacheFarmacia');
                 
-                // Evita di mostrare turni che potrebbero essere scaduti o errati
-                document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Riconnessione in corso...</h3>`;
+                if (txtCache) {
+                    console.warn("Nessuna connessione. Caricamento dati in cache avviato.");
+                    // Processa i dati segnalando che siamo offline
+                    processaDatiCSV(txtCache, true);
+                } else {
+                    // --- NESSUNA CACHE: GESTIONE ERRORE TOTALE ---
+                    document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
+                    document.getElementById('header').className = "errore-rete";
+                    document.getElementById('stato-testo').innerText = "OFFLINE";
+                    document.getElementById('stato-testo').className = "testo-errore";
+                    document.getElementById('orario-dettaglio').innerText = "Nessun dato in memoria. In attesa di rete...";
+                    
+                    document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Riconnessione in corso...</h3>`;
+                }
             }
         }
 
@@ -300,8 +334,8 @@
             updateClock();
             carica();
             
-            // Aggiornamento silenzioso dei dati in background
-            setInterval(carica, 50000); 
+            // --- AGGIORNAMENTO: Intervallo alzato a 10 minuti (600.000 ms) ---
+            setInterval(carica, 600000); 
         });
     </script>
 </body>
