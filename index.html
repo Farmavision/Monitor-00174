@@ -11,6 +11,17 @@
             height: 100vh; width: 100vw;
             display: flex; flex-direction: column; overflow: hidden;
             font-family: 'Segoe UI', sans-serif;
+            
+            /* --- OTTIMIZZAZIONI KIOSK --- */
+            cursor: none; /* Nasconde il cursore del mouse */
+            user-select: none; /* Impedisce la selezione del testo */
+            -webkit-user-select: none;
+            touch-action: manipulation; /* Ottimizza il tocco ed evita zoom accidentali */
+        }
+
+        /* Nasconde la barra di scorrimento ma permette lo scroll interno */
+        ::-webkit-scrollbar {
+            display: none;
         }
 
         /* --- LAYOUT 18-50-32 --- */
@@ -135,6 +146,23 @@
     </div>
 
     <script>
+        // --- BLOCCO EVENTI KIOSK ---
+        // Disabilita il menu del tasto destro
+        window.addEventListener('contextmenu', function (e) { 
+            e.preventDefault(); 
+        }, false);
+
+        // Forza il fullscreen al primo click (utile se non si avvia Chrome/Edge tramite flag --kiosk)
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Fullscreen ignorato: ${err.message}`);
+                });
+            }
+        }
+        window.addEventListener('click', toggleFullScreen);
+        // ---------------------------
+
         function updateClock() { 
             const ora = new Date().toLocaleTimeString('it-IT');
             if(document.getElementById('clock')) document.getElementById('clock').innerText = ora; 
@@ -163,8 +191,9 @@
                 if (ore.length === 2) {
                     let startStr = ore[0].trim();
                     let endStr = ore[1].trim();
-                    let startMin = parseInt(startStr.split(':')[0]) * 60 + (parseInt(startStr.split(':')[1]) || 0);
-                    let endMin = parseInt(endStr.split(':')[0]) * 60 + (parseInt(endStr.split(':')[1]) || 0);
+                    // Ottimizzazione silente per prevenire errori nel calcolo se i due punti mancano
+                    let startMin = (startStr.includes(':')) ? parseInt(startStr.split(':')[0]) * 60 + (parseInt(startStr.split(':')[1]) || 0) : 0;
+                    let endMin = (endStr.includes(':')) ? parseInt(endStr.split(':')[0]) * 60 + (parseInt(endStr.split(':')[1]) || 0) : 0;
                     fasce.push({ start: startMin, end: endMin, strInizio: startStr, strFine: endStr });
                 }
             }
@@ -199,14 +228,13 @@
             return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "CONSULTARE ORARI" };
         }
 
-        // Funzione per ripulire l'HTML prevenendo XSS (iniezione di codice malevolo)
+        // Funzione per ripulire l'HTML prevenendo iniezioni di codice (XSS)
         function escapeHTML(str) {
             return str.replace(/[&<>'"]/g, tag => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag] || tag));
         }
 
-        // --- NUOVA FUNZIONE: Estrae la logica di parsing in modo da poter essere usata sia per i dati online che offline ---
         function processaDatiCSV(txt, isOffline = false) {
             const urlParams = new URLSearchParams(window.location.search);
             const MIO_ID = urlParams.get('id') || "RM002"; 
@@ -252,7 +280,7 @@
                 else if (r[17] === "T") {
                     const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
                     
-                    // Protezione XSS sui campi testuali liberi
+                    // Protezione XSS sui testi liberi
                     const nomeT = escapeHTML(r[1]);
                     const indT = escapeHTML(r[2]);
 
@@ -295,16 +323,15 @@
             const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
 
             try {
-                // Fetch con timestamp per eludere la cache del browser
+                // Fetch con timestamp per aggirare la cache del browser
                 const res = await fetch(urlCompleto + "&t=" + Date.now());
                 if (!res.ok) throw new Error("Risposta non OK dal server Google");
                 
                 const txt = await res.text();
                 
-                // --- SALVATAGGIO IN LOCAL STORAGE (CACHE) ---
+                // --- SALVATAGGIO IN LOCAL STORAGE (CACHE OFFLINE) ---
                 localStorage.setItem('cacheFarmacia', txt);
                 
-                // Processa i dati normalmente
                 processaDatiCSV(txt, false);
 
             } catch(e) { 
@@ -315,10 +342,8 @@
                 
                 if (txtCache) {
                     console.warn("Nessuna connessione. Caricamento dati in cache avviato.");
-                    // Processa i dati segnalando che siamo offline
                     processaDatiCSV(txtCache, true);
                 } else {
-                    // --- NESSUNA CACHE: GESTIONE ERRORE TOTALE ---
                     document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
                     document.getElementById('header').className = "errore-rete";
                     document.getElementById('stato-testo').innerText = "OFFLINE";
@@ -332,9 +357,11 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             updateClock();
-            carica();
             
-            // --- AGGIORNAMENTO: Intervallo alzato a 10 minuti (600.000 ms) ---
+            // Ritardo di 5 secondi all'avvio (Safe Start) per dare tempo alla rete post-reboot
+            setTimeout(carica, 5000); 
+            
+            // Intervallo di aggiornamento a 10 minuti (600.000 ms)
             setInterval(carica, 600000); 
         });
     </script>
