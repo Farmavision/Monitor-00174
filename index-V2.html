@@ -278,7 +278,7 @@
                     controlloAperturaCalendario(idCalendario);
 
                     const oraAttuale = new Date().getHours();
-                    let linkSelezionato = (oraAttuale >= 7 && oraAttuale < 20) ? r[5] : r[6];
+                    let linkSelezionato = (oraAttuale >= 8 && oraAttuale < 22) ? r[5] : r[6];
 
                     const comandoCSV = linkSelezionato ? linkSelezionato.trim() : ""; 
                     const footerEl = document.getElementById('footer-promo');
