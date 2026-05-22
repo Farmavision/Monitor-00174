@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Farmacia Universale</title>
+    <title>Monitor Farmacia Universale v2.0 - PharmLink</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -133,7 +133,7 @@
             <span class="croce">✚</span>
         </div>
         <div id="stato-testo">---</div>
-        <div id="orario-dettaglio">---</div>
+        <div id="orario-dettaglio">Sincronizzazione in corso...</div>
     </div>
 
     <div id="container-main">
@@ -146,13 +146,14 @@
     </div>
 
     <script>
-        // --- BLOCCO EVENTI KIOSK ---
-        // Disabilita il menu del tasto destro
-        window.addEventListener('contextmenu', function (e) { 
-            e.preventDefault(); 
-        }, false);
+        // ==========================================
+        // CONFIGURAZIONE CHIAVE API GOOGLE CALENDAR
+        // ==========================================
+        const GOOGLE_API_KEY = "INSERISCI_QUI_LA_TUA_GOOGLE_API_KEY";
 
-        // Forza il fullscreen al primo click (utile se non si avvia Chrome/Edge tramite flag --kiosk)
+        // --- BLOCCO EVENTI KIOSK ---
+        window.addEventListener('contextmenu', function (e) { e.preventDefault(); }, false);
+
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -169,75 +170,92 @@
         }
         setInterval(updateClock, 1000);
 
-        const giorniSettimana = ["DOMENICA", "LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ", "GIOVEDÌ", "VENERDÌ", "SABATO"];
+        // --- NUOVA FUNZIONE DI SINCRONIZZAZIONE GOOGLE CALENDAR ---
+        async function controlloAperturaCalendario(calendarId) {
+            if (!calendarId) {
+                impostaErroreCalendario("ID Calendario non configurato nel DB");
+                return;
+            }
+            if (GOOGLE_API_KEY === "INSERISCI_QUI_LA_TUA_GOOGLE_API_KEY") {
+                impostaErroreCalendario("Inserire API Key valida nel codice");
+                return;
+            }
 
-        function estraiOrarioDaCSV(r, indiceGiorno) {
-            if (indiceGiorno === 0) return r[14]; 
-            if (indiceGiorno === 6) return r[13]; 
-            return r[12]; 
+            const adesso = new Date();
+            const timeMin = adesso.toISOString();
+            
+            // Richiediamo i prossimi 2 eventi futuri o in corso (ordinati per orario di inizio)
+            const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&maxResults=2&singleEvents=true&orderBy=startTime&key=${GOOGLE_API_KEY}`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Risposta non valida dalle API Calendar");
+                const data = await res.json();
+
+                const headerEl = document.getElementById('header');
+                const statoEl = document.getElementById('stato-testo');
+                const dettEl = document.getElementById('orario-dettaglio');
+
+                if (data.items && data.items.length > 0) {
+                    const primoEvento = data.items[0];
+                    const startEv = new Date(primoEvento.start.dateTime || primoEvento.start.date);
+                    const endEv = new Date(primoEvento.end.dateTime || primoEvento.end.date);
+
+                    // LOGICA: Se l'evento più vicino è già iniziato ed è tuttora in corso -> APERTO
+                    if (startEv <= adesso && endEv > adesso) {
+                        headerEl.className = "aperto";
+                        statoEl.innerText = primoEvento.summary ? primoEvento.summary.toUpperCase() : "APERTO";
+                        statoEl.className = "testo-aperto";
+                        
+                        const oraFineStr = endEv.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                        dettEl.innerText = "APERTO FINO ALLE ORE " + oraFineStr;
+                    } 
+                    // Se l'evento più vicino inizia nel futuro -> CHIUSO (calcola la riapertura)
+                    else {
+                        headerEl.className = "chiuso";
+                        statoEl.innerText = "ATTUALMENTE CHIUSA";
+                        statoEl.className = "testo-chiuso";
+
+                        let oraInizioStr = startEv.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                        
+                        // Controllo se riapre oggi o nei prossimi giorni
+                        if (startEv.toDateString() === adesso.toDateString()) {
+                            dettEl.innerText = "RIAPRE OGGI ALLE ORE " + oraInizioStr;
+                        } else {
+                            const nomeGiorno = startEv.toLocaleDateString('it-IT', { weekday: 'long' }).toUpperCase();
+                            dettEl.innerText = `RIAPRE ${nomeGiorno} ALLE ORE ${oraInizioStr}`;
+                        }
+                    }
+                } else {
+                    // Calendario vuoto (Nessun evento futuro registrato)
+                    headerEl.className = "chiuso";
+                    statoEl.innerText = "ATTUALMENTE CHIUSA";
+                    statoEl.className = "testo-chiuso";
+                    dettEl.innerText = "CONSULTARE GLI ORARI DI TURNO QUI SOTTO";
+                }
+            } catch (error) {
+                console.error("Errore Calendario:", error);
+                impostaErroreCalendario("Errore Sincronizzazione Live Orari");
+            }
         }
 
-        function parseFasce(orarioStr) {
-            if (!orarioStr) return [];
-            let s = orarioStr.toUpperCase().trim();
-            if (s.includes("CHIUSO")) return [];
-            if (s.includes("H24") || s.includes("APERTO")) {
-                return [{ start: 0, end: 1440, strInizio: "00:00", strFine: "24:00", h24: true }];
-            }
-            let fasce = [];
-            let parti = s.split(',');
-            for (let p of parti) {
-                let ore = p.split('-');
-                if (ore.length === 2) {
-                    let startStr = ore[0].trim();
-                    let endStr = ore[1].trim();
-                    // Ottimizzazione silente per prevenire errori nel calcolo se i due punti mancano
-                    let startMin = (startStr.includes(':')) ? parseInt(startStr.split(':')[0]) * 60 + (parseInt(startStr.split(':')[1]) || 0) : 0;
-                    let endMin = (endStr.includes(':')) ? parseInt(endStr.split(':')[0]) * 60 + (parseInt(endStr.split(':')[1]) || 0) : 0;
-                    fasce.push({ start: startMin, end: endMin, strInizio: startStr, strFine: endStr });
-                }
-            }
-            return fasce.sort((a,b) => a.start - b.start);
+        function impostaErroreCalendario(messaggio) {
+            document.getElementById('header').className = "errore-rete";
+            document.getElementById('stato-testo').innerText = "CALENDARIO OFFLINE";
+            document.getElementById('stato-testo').className = "testo-errore";
+            document.getElementById('orario-dettaglio').innerText = messaggio;
         }
 
-        function calcolaStatoApertura(r) {
-            let adesso = new Date();
-            let oraCorrente = adesso.getHours() * 60 + adesso.getMinutes();
-            let indiceOggi = adesso.getDay();
-            let fasceOggi = parseFasce(estraiOrarioDaCSV(r, indiceOggi));
-
-            for (let f of fasceOggi) {
-                if (f.h24) return { aperta: true, stato: "APERTO H24", dettaglio: "SERVIZIO CONTINUATO" };
-                if (oraCorrente >= f.start && oraCorrente < f.end) {
-                    return { aperta: true, stato: "APERTO", dettaglio: "APERTO FINO ALLE " + f.strFine };
-                }
-            }
-            for (let f of fasceOggi) {
-                if (f.start > oraCorrente) {
-                    return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "RIAPRE ALLE ORE " + f.strInizio };
-                }
-            }
-            for (let i = 1; i <= 7; i++) {
-                let prossimoGiorno = (indiceOggi + i) % 7;
-                let fasceFuture = parseFasce(estraiOrarioDaCSV(r, prossimoGiorno));
-                if (fasceFuture.length > 0) {
-                    let nomeGiorno = (i === 1) ? "DOMANI" : giorniSettimana[prossimoGiorno];
-                    return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "RIAPRE " + nomeGiorno + " ALLE ORE " + fasceFuture[0].strInizio };
-                }
-            }
-            return { aperta: false, stato: "ATTUALMENTE CHIUSA", dettaglio: "CONSULTARE ORARI" };
-        }
-
-        // Funzione per ripulire l'HTML prevenendo iniezioni di codice (XSS)
         function escapeHTML(str) {
             return str.replace(/[&<>'"]/g, tag => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag] || tag));
         }
 
-        function processaDatiCSV(txt, isOffline = false) {
+        // --- AGGIORNATO CON I NUOVI INDICI DEL DATABASE "PharmLink DB" ---
+        async function processaDatiCSV(txt, isOffline = false) {
             const urlParams = new URLSearchParams(window.location.search);
-            const MIO_ID = urlParams.get('id') || "RM002"; 
+            const MIO_ID = urlParams.get('id') || "RM001"; // Default aggiornato al nuovo screen
 
             const righe = txt.split(/\r?\n/).map(r => 
                 r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
@@ -251,38 +269,44 @@
                 const r = righe[i];
                 if (!r[1]) continue;
 
-                if (r[0] === MIO_ID && r[17] === "O") {
+                // OWNER MONITOR PROPRIO (Colonna N -> r[13] === "O")
+                if (r[0] === MIO_ID && r[13] === "O") {
                     ownerTrovato = true;
-                    document.getElementById('nome-testo-dinamico').innerText = r[1];
+                    document.getElementById('nome-testo-dinamico').innerText = r[1]; // Colonna B
                     
-                    const statoFarmacia = calcolaStatoApertura(r);
-                    const headerEl = document.getElementById('header');
-                    const statoEl = document.getElementById('stato-testo');
-                    const dettEl = document.getElementById('orario-dettaglio');
+                    // Estraggo l'ID Calendario (Colonna H -> r[7])
+                    const idCalendario = r[7] ? r[7].trim() : "";
+                    
+                    // Lancio il controllo asincrono del calendario
+                    controlloAperturaCalendario(idCalendario);
 
-                    // Imposta i colori in base allo stato
-                    headerEl.className = statoFarmacia.aperta ? "aperto" : "chiuso";
+                    // GESTIONE SMART FOOTER (GIORNO VS NOTTE)
+                    const oraAttuale = new Date().getHours();
+                    let linkSelezionato = "";
                     
-                    statoEl.innerText = statoFarmacia.stato;
-                    statoEl.className = statoFarmacia.aperta ? "testo-aperto" : "testo-chiuso";
-                    
-                    // Se siamo offline, avvisa l'utente affianco all'orario
-                    dettEl.innerText = statoFarmacia.dettaglio + (isOffline ? " [MODALITÀ OFFLINE]" : "");
+                    // Fascia diurna elastica (es: dalle 07:00 alle 19:59 usa Giorno, altrimenti Notte)
+                    if (oraAttuale >= 7 && oraAttuale < 20) {
+                        linkSelezionato = r[5]; // Colonna F -> Footer Giorno
+                    } else {
+                        linkSelezionato = r[6]; // Colonna G -> Footer Notte
+                    }
 
-                    const comandoCSV = r[5] ? r[5].trim() : ""; 
+                    const comandoCSV = linkSelezionato ? linkSelezionato.trim() : ""; 
                     const footerEl = document.getElementById('footer-promo');
+                    
                     if (comandoCSV !== "") {
                         footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
                     } else {
                         footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
                     }
                 } 
-                else if (r[17] === "T") {
+                // FARMACIE DI TURNO COMPLEMENTARI (Colonna N -> r[13] === "T")
+                else if (r[13] === "T") {
+                    // QR Code generato dal link mappa (Colonna E -> r[4])
                     const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
                     
-                    // Protezione XSS sui testi liberi
-                    const nomeT = escapeHTML(r[1]);
-                    const indT = escapeHTML(r[2]);
+                    const nomeT = escapeHTML(r[1]); // Colonna B
+                    const indT = escapeHTML(r[2]);  // Colonna C
 
                     turniHtml += `
                         <div class="card">
@@ -300,7 +324,7 @@
                 document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
                 document.getElementById('header').className = "errore-rete";
                 document.getElementById('stato-testo').innerText = "---";
-                document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID";
+                document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID in URL o nel database";
             }
             
             document.getElementById('body-turni').innerHTML = turniHtml;
@@ -319,29 +343,24 @@
 
             const MIO_GID = urlParams.get('gid') || "0"; 
 
-            const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlKTJnX3hjix1tPqrzXixNG3SH203P8IMXe2DvoytmrXVMgqQ_mdF5BXD_wsfh7Jb1TfR4qT4Lu8DU/pub";
+            // Link di pubblicazione aggiornato all'ID del nuovo foglio "PharmLink DB"
+            const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vI14V6H7ouoDRHdYag_mwTri0TFOdhgRbL6blYPuVoPFs/pub";
             const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
 
             try {
-                // Fetch con timestamp per aggirare la cache del browser
                 const res = await fetch(urlCompleto + "&t=" + Date.now());
                 if (!res.ok) throw new Error("Risposta non OK dal server Google");
                 
                 const txt = await res.text();
-                
-                // --- SALVATAGGIO IN LOCAL STORAGE (CACHE OFFLINE) ---
                 localStorage.setItem('cacheFarmacia', txt);
                 
                 processaDatiCSV(txt, false);
 
             } catch(e) { 
                 console.error("Errore di Rete:", e); 
-                
-                // --- TENTATIVO DI RECUPERO DA CACHE ---
                 const txtCache = localStorage.getItem('cacheFarmacia');
                 
                 if (txtCache) {
-                    console.warn("Nessuna connessione. Caricamento dati in cache avviato.");
                     processaDatiCSV(txtCache, true);
                 } else {
                     document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
@@ -349,7 +368,6 @@
                     document.getElementById('stato-testo').innerText = "OFFLINE";
                     document.getElementById('stato-testo').className = "testo-errore";
                     document.getElementById('orario-dettaglio').innerText = "Nessun dato in memoria. In attesa di rete...";
-                    
                     document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Riconnessione in corso...</h3>`;
                 }
             }
@@ -357,12 +375,8 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             updateClock();
-            
-            // Ritardo di 5 secondi all'avvio (Safe Start) per dare tempo alla rete post-reboot
-            setTimeout(carica, 5000); 
-            
-            // Intervallo di aggiornamento a 10 minuti (600.000 ms)
-            setInterval(carica, 600000); 
+            setTimeout(carica, 5000); // Avvio sicuro a 5 secondi
+            setInterval(carica, 600000); // Aggiornamento DB ogni 10 minuti
         });
     </script>
 </body>
