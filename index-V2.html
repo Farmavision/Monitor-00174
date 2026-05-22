@@ -11,20 +11,14 @@
             height: 100vh; width: 100vw;
             display: flex; flex-direction: column; overflow: hidden;
             font-family: 'Segoe UI', sans-serif;
-            
-            /* --- OTTIMIZZAZIONI KIOSK --- */
-            cursor: none; /* Nasconde il cursore del mouse */
-            user-select: none; /* Impedisce la selezione del testo */
+            cursor: none;
+            user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation; /* Ottimizza il tocco ed evita zoom accidentali */
+            touch-action: manipulation;
         }
 
-        /* Nasconde la barra di scorrimento ma permette lo scroll interno */
-        ::-webkit-scrollbar {
-            display: none;
-        }
+        ::-webkit-scrollbar { display: none; }
 
-        /* --- LAYOUT 18-50-32 --- */
         #header { 
             flex: 0 0 18vh; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
@@ -33,67 +27,26 @@
             transition: background-color 0.5s ease;
         }
 
-        #container-main { 
-            flex: 0 0 50vh; 
-            padding: 20px; 
-            overflow-y: auto; 
-        }
-
-        #footer-promo {
-            flex: 0 0 32vh; 
-            width: 100%;
-            background-color: white; 
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-
-        /* --- STILI HEADER --- */
+        #container-main { flex: 0 0 50vh; padding: 20px; overflow-y: auto; }
+        #footer-promo { flex: 0 0 32vh; width: 100%; background-color: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         #clock { font-size: 1.2rem; color: #00ff88; font-weight: bold; position: absolute; top: 10px; right: 20px; }
         
         .label-static { 
-            font-size: 1.6rem; 
-            color: #ffffff; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            margin-bottom: -10px;
-            opacity: 0.8;
+            font-size: 1.6rem; color: #ffffff; font-weight: 800; 
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: -10px; opacity: 0.8;
         }
 
         #txt-nome { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 20px; 
-            font-size: 3.8rem; 
-            font-weight: 900; 
-            color: #ffffff; 
-            text-transform: uppercase; 
-            line-height: 1; 
-            margin: 5px 0;
-            text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 20px; 
+            font-size: 3.8rem; font-weight: 900; color: #ffffff; text-transform: uppercase; 
+            line-height: 1; margin: 5px 0; text-align: center;
         }
 
-        /* --- SUPPORTO ORIENTAMENTO VERTICALE --- */
         body.v { flex-direction: column; }
-        
-        body.v #header { 
-            flex: 0 0 22vh; 
-            padding: 10px;
-        }
-
-        body.v #txt-nome { 
-            font-size: 2.8rem; 
-            text-align: center;
-            flex-wrap: wrap;
-            line-height: 1.1;
-        }
-
+        body.v #header { flex: 0 0 22vh; padding: 10px; }
+        body.v #txt-nome { font-size: 2.8rem; text-align: center; flex-wrap: wrap; line-height: 1.1; }
         body.v #container-main { flex: 0 0 48vh; }
         body.v #footer-promo { flex: 0 0 30vh; }
-
-        body.v .card h3 { font-size: 1.5rem; } 
-        body.v .card p { font-size: 1.1rem; }
 
         .croce { color: #00ff88; font-size: 1.2em; animation: pulse-farmacia 2s infinite ease-in-out; }
         @keyframes pulse-farmacia { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
@@ -101,7 +54,6 @@
         #stato-testo { font-size: 1.8rem; font-weight: 900; text-transform: uppercase; }
         #orario-dettaglio { font-size: 1.1rem; color: #cbd5e1; font-weight: 600; }
 
-        /* Stati di colore Header */
         .aperto { background: #064e3b; }
         .chiuso { background: #b91c1c; border-bottom-color: #ff4444 !important; }
         .errore-rete { background: #333333; border-bottom-color: #ffcc00 !important; } 
@@ -113,7 +65,6 @@
         .chiuso .croce { color: white; }
         .errore-rete .croce { color: #777777; animation: none; }
 
-        /* --- CARD TURNI --- */
         #titolo-turni { text-align: center; color: #00ff88; font-size: 1.3rem; margin-bottom: 15px; text-transform: uppercase; }
         .card { background: #172a45; margin-bottom: 15px; padding: 15px; border-radius: 15px; border: 2px solid #233554; display: flex; align-items: center; }
         .card-info { flex: 1; }
@@ -162,7 +113,6 @@
             }
         }
         window.addEventListener('click', toggleFullScreen);
-        // ---------------------------
 
         function updateClock() { 
             const ora = new Date().toLocaleTimeString('it-IT');
@@ -170,21 +120,15 @@
         }
         setInterval(updateClock, 1000);
 
-        // --- NUOVA FUNZIONE DI SINCRONIZZAZIONE GOOGLE CALENDAR ---
+        // --- FUNZIONE DI SINCRONIZZAZIONE GOOGLE CALENDAR ---
         async function controlloAperturaCalendario(calendarId) {
             if (!calendarId) {
                 impostaErroreCalendario("ID Calendario non configurato nel DB");
                 return;
             }
-            if (GOOGLE_API_KEY === "INSERISCI_QUI_LA_TUA_GOOGLE_API_KEY") {
-                impostaErroreCalendario("Inserire API Key valida nel codice");
-                return;
-            }
 
             const adesso = new Date();
             const timeMin = adesso.toISOString();
-            
-            // Richiediamo i prossimi 2 eventi futuri o in corso (ordinati per orario di inizio)
             const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&maxResults=2&singleEvents=true&orderBy=startTime&key=${GOOGLE_API_KEY}`;
 
             try {
@@ -201,24 +145,18 @@
                     const startEv = new Date(primoEvento.start.dateTime || primoEvento.start.date);
                     const endEv = new Date(primoEvento.end.dateTime || primoEvento.end.date);
 
-                    // LOGICA: Se l'evento più vicino è già iniziato ed è tuttora in corso -> APERTO
                     if (startEv <= adesso && endEv > adesso) {
                         headerEl.className = "aperto";
                         statoEl.innerText = primoEvento.summary ? primoEvento.summary.toUpperCase() : "APERTO";
                         statoEl.className = "testo-aperto";
-                        
                         const oraFineStr = endEv.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
                         dettEl.innerText = "APERTO FINO ALLE ORE " + oraFineStr;
-                    } 
-                    // Se l'evento più vicino inizia nel futuro -> CHIUSO (calcola la riapertura)
-                    else {
+                    } else {
                         headerEl.className = "chiuso";
                         statoEl.innerText = "ATTUALMENTE CHIUSA";
                         statoEl.className = "testo-chiuso";
-
                         let oraInizioStr = startEv.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
                         
-                        // Controllo se riapre oggi o nei prossimi giorni
                         if (startEv.toDateString() === adesso.toDateString()) {
                             dettEl.innerText = "RIAPRE OGGI ALLE ORE " + oraInizioStr;
                         } else {
@@ -227,7 +165,6 @@
                         }
                     }
                 } else {
-                    // Calendario vuoto (Nessun evento futuro registrato)
                     headerEl.className = "chiuso";
                     statoEl.innerText = "ATTUALMENTE CHIUSA";
                     statoEl.className = "testo-chiuso";
@@ -239,23 +176,25 @@
             }
         }
 
+        // CORRETTO IL REFUSO 'mensaje' -> 'messaggio'
         function impostaErroreCalendario(messaggio) {
             document.getElementById('header').className = "errore-rete";
             document.getElementById('stato-testo').innerText = "CALENDARIO OFFLINE";
             document.getElementById('stato-testo').className = "testo-errore";
-            document.getElementById('orario-dettaglio').innerText = messaggio;
+            document.getElementById('orario-dettaglio').innerText = messaggio || "Configurazione in corso...";
         }
 
+        // FUNZIONE ESCAPE AGGIORNATA CONTRO I CAMPI VUOTI/UNDEFINED
         function escapeHTML(str) {
+            if (!str) return "";
             return str.replace(/[&<>'"]/g, tag => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag] || tag));
         }
 
-        // --- AGGIORNATO CON I NUOVI INDICI DEL DATABASE "PharmLink DB" ---
         async function processaDatiCSV(txt, isOffline = false) {
             const urlParams = new URLSearchParams(window.location.search);
-            const MIO_ID = urlParams.get('id') || "RM001"; // Default aggiornato al nuovo screen
+            const MIO_ID = urlParams.get('id') || "RM001"; 
 
             const righe = txt.split(/\r?\n/).map(r => 
                 r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
@@ -269,27 +208,15 @@
                 const r = righe[i];
                 if (!r[1]) continue;
 
-                // OWNER MONITOR PROPRIO (Colonna N -> r[13] === "O")
                 if (r[0] === MIO_ID && r[13] === "O") {
                     ownerTrovato = true;
-                    document.getElementById('nome-testo-dinamico').innerText = r[1]; // Colonna B
+                    document.getElementById('nome-testo-dinamico').innerText = r[1]; 
                     
-                    // Estraggo l'ID Calendario (Colonna H -> r[7])
                     const idCalendario = r[7] ? r[7].trim() : "";
-                    
-                    // Lancio il controllo asincrono del calendario
                     controlloAperturaCalendario(idCalendario);
 
-                    // GESTIONE SMART FOOTER (GIORNO VS NOTTE)
                     const oraAttuale = new Date().getHours();
-                    let linkSelezionato = "";
-                    
-                    // Fascia diurna elastica (es: dalle 07:00 alle 19:59 usa Giorno, altrimenti Notte)
-                    if (oraAttuale >= 7 && oraAttuale < 20) {
-                        linkSelezionato = r[5]; // Colonna F -> Footer Giorno
-                    } else {
-                        linkSelezionato = r[6]; // Colonna G -> Footer Notte
-                    }
+                    let linkSelezionato = (oraAttuale >= 7 && oraAttuale < 20) ? r[5] : r[6];
 
                     const comandoCSV = linkSelezionato ? linkSelezionato.trim() : ""; 
                     const footerEl = document.getElementById('footer-promo');
@@ -300,13 +227,10 @@
                         footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
                     }
                 } 
-                // FARMACIE DI TURNO COMPLEMENTARI (Colonna N -> r[13] === "T")
                 else if (r[13] === "T") {
-                    // QR Code generato dal link mappa (Colonna E -> r[4])
                     const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
-                    
-                    const nomeT = escapeHTML(r[1]); // Colonna B
-                    const indT = escapeHTML(r[2]);  // Colonna C
+                    const nomeT = escapeHTML(r[1]); 
+                    const indT = escapeHTML(r[2]); 
 
                     turniHtml += `
                         <div class="card">
@@ -324,7 +248,7 @@
                 document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
                 document.getElementById('header').className = "errore-rete";
                 document.getElementById('stato-testo').innerText = "---";
-                document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID in URL o nel database";
+                document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID o GID nel link";
             }
             
             document.getElementById('body-turni').innerHTML = turniHtml;
@@ -332,8 +256,6 @@
 
         async function carica() {
             const urlParams = new URLSearchParams(window.location.search);
-            
-            // --- GESTIONE ORIENTAMENTO ---
             const MIO_DIR = urlParams.get('dir') || "h"; 
             if (MIO_DIR === "v") {
                 document.body.classList.add('v');
@@ -342,9 +264,7 @@
             }
 
             const MIO_GID = urlParams.get('gid') || "0"; 
-
-            // Link di pubblicazione aggiornato all'ID del nuovo foglio "PharmLink DB"
-            const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vI14V6H7ouoDRHdYag_mwTri0TFOdhgRbL6blYPuVoPFs/pub";
+            const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQhadH0ZU3GnAd5fucaWLYZ9s4TzZ5v41_x6xKG7yJYCLGGmQpwVPzbZSimbEcIJjqzcCe2YzS3Jfgt/pub";
             const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
 
             try {
@@ -353,7 +273,6 @@
                 
                 const txt = await res.text();
                 localStorage.setItem('cacheFarmacia', txt);
-                
                 processaDatiCSV(txt, false);
 
             } catch(e) { 
@@ -367,16 +286,16 @@
                     document.getElementById('header').className = "errore-rete";
                     document.getElementById('stato-testo').innerText = "OFFLINE";
                     document.getElementById('stato-testo').className = "testo-errore";
-                    document.getElementById('orario-dettaglio').innerText = "Nessun dato in memoria. In attesa di rete...";
-                    document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Riconnessione in corso...</h3>`;
+                    document.getElementById('orario-dettaglio').innerText = "Nessun dato in memoria o blocco di sicurezza locale attivo.";
+                    document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Carica la pagina tramite il link HTTPS di GitHub Pages per superare i blocchi locali.</h3>`;
                 }
             }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             updateClock();
-            setTimeout(carica, 5000); // Avvio sicuro a 5 secondi
-            setInterval(carica, 600000); // Aggiornamento DB ogni 10 minuti
+            setTimeout(carica, 5000); 
+            setInterval(carica, 600000); 
         });
     </script>
 </body>
