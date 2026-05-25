@@ -65,7 +65,8 @@
         .chiuso .croce { color: white; }
         .errore-rete .croce { color: #777777; animation: none; }
 
-        #titolo-turni { text-align: center; color: #00ff88; font-size: 1.3rem; margin-bottom: 15px; text-transform: uppercase; }
+        /* Trasformato in classe per supportare i due titoli dinamici */
+        .titolo-turni { text-align: center; color: #00ff88; font-size: 1.3rem; margin-top: 10px; margin-bottom: 15px; text-transform: uppercase; }
         .card { background: #172a45; margin-bottom: 15px; padding: 15px; border-radius: 15px; border: 2px solid #233554; display: flex; align-items: center; }
         .card-info { flex: 1; }
         .card h3 { color: #00ff88; font-size: 1.8rem; text-transform: uppercase; margin-bottom: 5px; }
@@ -87,10 +88,7 @@
         <div id="orario-dettaglio">Sincronizzazione in corso...</div>
     </div>
 
-    <div id="container-main">
-        <h2 id="titolo-turni">FARMACIE DI TURNO CHE EFFETTUANO SERVIZIO ASSISTENZIALE H24 NELLA ZONA</h2>
-        <div id="body-turni"></div>
-    </div>
+    <div id="container-main"></div>
 
     <div id="footer-promo">
         <div style="color: #0a192f; font-weight: 900; font-size: 2rem;">IN ATTESA DATI...</div>
@@ -188,7 +186,7 @@
                             dettEl.innerText = "APERTO FINO ALLE ORE " + oraFineStr;
                         } else {
                             headerEl.className = "chiuso"; 
-                            statoEl.innerText = titoloInCorso; 
+                            statoEl.innerText = TITLEInCorso; 
                             statoEl.className = "testo-chiuso";
                             dettEl.innerText = calcolaTestoRiapertura(prossimaApertura);
                         }
@@ -234,7 +232,7 @@
             }[tag] || tag));
         }
 
-        // --- FUNZIONE PROCESSA DATI MODIFICATA PER GESTIONE OFFLINE DEL FOOTER ---
+        // --- FUNZIONE PROCESSA DATI RI-PROGRAMMATA CON COINVOLGIMENTO PARAMETRI TD/TN ED INVERSIONE ---
         async function processaDatiCSV(txt, isOffline = false) {
             const urlParams = new URLSearchParams(window.location.search);
             const MIO_ID = urlParams.get('id') || "RM001"; 
@@ -244,13 +242,19 @@
                  .map(v => v.replace(/^"|"$/g, '').trim())
             );
             
-            let turniHtml = "";
+            let diurnoHtml = "";
+            let notturnoHtml = "";
             let ownerTrovato = false;
+
+            const oraAttuale = new Date().getHours();
+            // True se siamo in orario Diurno (08:00 - 21:59). False se Notturno (22:00 - 07:59)
+            const isDiurnoOra = (oraAttuale >= 8 && oraAttuale < 22);
 
             for (let i = 1; i < righe.length; i++) {
                 const r = righe[i];
                 if (!r[1]) continue;
 
+                // Rilevazione e gestione dell'Owner (Farmacia Principale dello schermo)
                 if (r[0] === MIO_ID && r[13] === "O") {
                     ownerTrovato = true;
                     document.getElementById('nome-testo-dinamico').innerText = r[1]; 
@@ -258,38 +262,32 @@
                     const idCalendario = r[7] ? r[7].trim() : "";
                     controlloAperturaCalendario(idCalendario);
 
-                    const oraAttuale = new Date().getHours();
-                    // Diurno: dalle 08:00 alle 21:59. Notturno: dalle 22:00 alle 07:59
-                    let linkSelezionato = (oraAttuale >= 8 && oraAttuale < 22) ? r[5] : r[6];
-
+                    let linkSelezionato = isDiurnoOra ? r[5] : r[6];
                     const comandoCSV = linkSelezionato ? linkSelezionato.trim() : ""; 
                     const footerEl = document.getElementById('footer-promo');
                     
                     if (comandoCSV !== "") {
-                        // MODIFICA QUI: Controllo dello stato Offline
                         if (isOffline) {
-                            // Se il router è staccato, carichiamo file multimediali locali salvati nella cartella del progetto
-                            const fileLocaleBackup = (oraAttuale >= 8 && oraAttuale < 22) ? "diurno_offline.jpg" : "notturno_offline.jpg";
-                            
+                            const fileLocaleBackup = isDiurnoOra ? "diurno_offline.jpg" : "notturno_offline.jpg";
                             footerEl.innerHTML = `
                                 <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#ffffff;">
                                     <img src="${fileLocaleBackup}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\"color:#0a192f; font-weight:900; font-size:2rem; text-align:center;\">FARMACIA AL VOSTRO SERVIZIO</div>'">
                                 </div>`;
                             console.log("Footer impostato in modalità OFFLINE con file locale: " + fileLocaleBackup);
                         } else {
-                            // Se siamo online, carichiamo regolarmente il player con il link dinamico di Canva
                             footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
                         }
                     } else {
                         footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
                     }
                 } 
-                else if (r[13] === "T") {
+                // Selezione e smistamento delle farmacie di turno estratte per il CAP (Colonna N / r[13])
+                else if (r[13] === "TD" || r[13] === "TN") {
                     const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
                     const nomeT = escapeHTML(r[1]); 
                     const indT = escapeHTML(r[2]); 
 
-                    turniHtml += `
+                    const cardHtml = `
                         <div class="card">
                             <div class="card-info">
                                 <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA DI TURNO</div>
@@ -298,6 +296,12 @@
                             </div>
                             ${qr}
                         </div>`;
+
+                    if (r[13] === "TD") {
+                        diurnoHtml += cardHtml;
+                    } else if (r[13] === "TN") {
+                        notturnoHtml += cardHtml;
+                    }
                 }
             }
 
@@ -308,7 +312,26 @@
                 document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID o GID nel link";
             }
             
-            document.getElementById('body-turni').innerHTML = turniHtml;
+            // Generazione dei titoli richiesti
+            const bloccoDiurno = `
+                <h2 class="titolo-turni">FARMACIE CHE EFFETTUANO SERVIZIO ASSISTENZIALE CONTINUATO 8.00-20.00</h2>
+                <div>${diurnoHtml || '<p style="text-align:center; color:#cbd5e1; margin-bottom:20px; font-style:italic;">Nessun turno diurno programmato</p>'}</div>
+            `;
+            
+            const bloccoNotturno = `
+                <h2 class="titolo-turni">FARMACIE CHE EFFETTUANO SERVIZIO ASSISTENZIALE CONTINUATO H24</h2>
+                <div>${notturnoHtml || '<p style="text-align:center; color:#cbd5e1; margin-bottom:20px; font-style:italic;">Nessun turno notturno programmato</p>'}</div>
+            `;
+
+            // Iniezione dinamica dei blocchi rispettando l'ordine orario richiesto
+            const containerMain = document.getElementById('container-main');
+            if (isDiurnoOra) {
+                // Diurno (Prima TD, sotto TN)
+                containerMain.innerHTML = bloccoDiurno + bloccoNotturno;
+            } else {
+                // Notturno (Prima TN, sotto TD)
+                containerMain.innerHTML = bloccoNotturno + bloccoDiurno;
+            }
         }
 
         async function carica() {
@@ -330,21 +353,21 @@
                 
                 const txt = await res.text();
                 localStorage.setItem('cacheFarmacia', txt);
-                processaDatiCSV(txt, false); // Online, carica Canva
+                processaDatiCSV(txt, false); // Online
 
             } catch(e) { 
                 console.error("Errore di Rete:", e); 
                 const txtCache = localStorage.getItem('cacheFarmacia');
                 
                 if (txtCache) {
-                    processaDatiCSV(txtCache, true); // Offline, usa i file locali salvati
+                    processaDatiCSV(txtCache, true); // Offline
                 } else {
                     document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
                     document.getElementById('header').className = "errore-rete";
                     document.getElementById('stato-testo').innerText = "OFFLINE";
                     document.getElementById('stato-testo').className = "testo-errore";
                     document.getElementById('orario-dettaglio').innerText = "Nessun dato in memoria o blocco di sicurezza locale attivo.";
-                    document.getElementById('body-turni').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Carica la pagina tramite il link HTTPS di GitHub Pages per superare i blocchi locali.</h3>`;
+                    document.getElementById('container-main').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Carica la pagina tramite il link HTTPS di GitHub Pages per superare i blocchi locali.</h3>`;
                 }
             }
         }
@@ -352,7 +375,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateClock();
             setTimeout(carica, 5000); 
-            setInterval(carica, 120000); 
+            setInterval(carica, 120000); // Ricarica e aggiorna la disposizione ogni 2 minuti
         });
     </script>
 </body>
