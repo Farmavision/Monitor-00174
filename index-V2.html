@@ -130,7 +130,6 @@
             const adesso = new Date();
             const timeMin = adesso.toISOString();
             
-            // Scarichiamo fino a 10 eventi per poter scavalcare ponti o ferie lunghe
             const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&maxResults=10&singleEvents=true&orderBy=startTime&key=${GOOGLE_API_KEY}`;
 
             try {
@@ -144,91 +143,72 @@
 
                 if (data.items && data.items.length > 0) {
                     
-                    // 1. CERCHIAMO L'EVENTO IN CORSO IN QUESTO PRECISO SECONDO
                     const eventoInCorso = data.items.find(ev => {
                         const start = new Date(ev.start.dateTime || ev.start.date);
                         const end = new Date(ev.end.dateTime || ev.end.date);
                         return start <= adesso && end > adesso;
                     });
 
-                    // 2. CERCHIAMO IL PRIMO EVENTO "APERTO" NEL FUTURO (LA VERA PROSSIMA RIAPERTURA)
                     const prossimaApertura = data.items.find(ev => {
                         const titolo = ev.summary ? ev.summary.toUpperCase() : "";
                         const start = new Date(ev.start.dateTime || ev.start.date);
                         return start > adesso && titolo.includes("APERTO");
                     });
 
-                    // FUNZIONE INTERNA PER FORMATTARE LA DATA DI RIAPERTURA IN ITALIANO CORRETTO
                     const calcolaTestoRiapertura = (aperturaEv) => {
                         if (!aperturaEv) return "CONSULTARE GLI ORARI DI TURNO QUI SOTTO";
                         
                         const start = new Date(aperturaEv.start.dateTime || aperturaEv.start.date);
                         const ora = start.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
                         
-                        // Se riapre oggi
                         if (start.toDateString() === adesso.toDateString()) {
                             return "RIAPRE OGGI ALLE ORE " + ora;
                         }
                         
-                        // Se riapre domani
                         const domani = new Date(adesso);
                         domani.setDate(domani.getDate() + 1);
                         if (start.toDateString() === domani.toDateString()) {
                             return "RIAPRE DOMANI ALLE ORE " + ora;
                         }
                         
-                        // Se riapre in un giorno successivo della settimana
                         const giornoSettimana = start.toLocaleDateString('it-IT', { weekday: 'long' }).toUpperCase();
                         const dataMese = start.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
                         return `RIAPRE ${giornoSettimana} ${dataMese} ALLE ORE ${ora}`;
                     };
-
-                    // =========================================================
-                    // GESTIONE DEI CASI DI VISUALIZZAZIONE
-                    // =========================================================
                     
                     if (eventoInCorso) {
                         const titoloInCorso = eventoInCorso.summary ? eventoInCorso.summary.toUpperCase() : "";
                         
                         if (titoloInCorso.includes("APERTO")) {
-                            // CASO A: Siamo aperti adesso (Orario regolare)
-                            headerEl.className = "aperto"; // VERDE
+                            headerEl.className = "aperto"; 
                             statoEl.innerText = "APERTO";
                             statoEl.className = "testo-aperto";
                             const endEv = new Date(eventoInCorso.end.dateTime || eventoInCorso.end.date);
                             const oraFineStr = endEv.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
                             dettEl.innerText = "APERTO FINO ALLE ORE " + oraFineStr;
                         } else {
-                            // CASO B: C'è un evento ora, ma è di chiusura (es. siamo in "FERIE")
-                            headerEl.className = "chiuso"; // ROSSO
-                            statoEl.innerText = titoloInCorso; // Mostra la causale esatta scritta su Google Calendar
+                            headerEl.className = "chiuso"; 
+                            statoEl.innerText = titoloInCorso; 
                             statoEl.className = "testo-chiuso";
-                            // Cerca il primo "APERTO" disponibile e calcola quando aprirà
                             dettEl.innerText = calcolaTestoRiapertura(prossimaApertura);
                         }
                     } else {
-                        // CASO C: Nessun evento in corso (La farmacia è chiusa, es. di notte o pausa pranzo)
-                        headerEl.className = "chiuso"; // ROSSO
+                        headerEl.className = "chiuso"; 
                         statoEl.className = "testo-chiuso";
 
-                        // Controlliamo se c'è un evento che inizierà a breve (il primo cronologicamente nel futuro)
                         const primoFuturoGenerico = data.items.find(ev => new Date(ev.start.dateTime || ev.start.date) > adesso);
                         const titoloProssimo = primoFuturoGenerico && primoFuturoGenerico.summary ? primoFuturoGenerico.summary.toUpperCase() : "";
 
                         if (titoloProssimo && !titoloProssimo.includes("APERTO")) {
-                            // Se il prossimo evento imminente è una chiusura (es. stasera è chiuso e domani iniziano le "FERIE")
                             statoEl.innerText = titoloProssimo;
                         } else {
-                            // Chiusura ordinaria notturna/serale
                             statoEl.innerText = "ATTUALMENTE CHIUSA";
                         }
 
-                        // Indica tassativamente quando ci sarà il primo evento "APERTO"
                         dettEl.innerText = calcolaTestoRiapertura(prossimaApertura);
                     }
 
                 } else {
-                    // Calendario totalmente vuoto (Nessun evento trovato)
                     headerEl.className = "chiuso";
                     statoEl.innerText = "ATTUALMENTE CHIUSA";
                     statoEl.className = "testo-chiuso";
@@ -254,6 +234,7 @@
             }[tag] || tag));
         }
 
+        // --- FUNZIONE PROCESSA DATI MODIFICATA PER GESTIONE OFFLINE DEL FOOTER ---
         async function processaDatiCSV(txt, isOffline = false) {
             const urlParams = new URLSearchParams(window.location.search);
             const MIO_ID = urlParams.get('id') || "RM001"; 
@@ -278,13 +259,27 @@
                     controlloAperturaCalendario(idCalendario);
 
                     const oraAttuale = new Date().getHours();
+                    // Diurno: dalle 08:00 alle 21:59. Notturno: dalle 22:00 alle 07:59
                     let linkSelezionato = (oraAttuale >= 8 && oraAttuale < 22) ? r[5] : r[6];
 
                     const comandoCSV = linkSelezionato ? linkSelezionato.trim() : ""; 
                     const footerEl = document.getElementById('footer-promo');
                     
                     if (comandoCSV !== "") {
-                        footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                        // MODIFICA QUI: Controllo dello stato Offline
+                        if (isOffline) {
+                            // Se il router è staccato, carichiamo file multimediali locali salvati nella cartella del progetto
+                            const fileLocaleBackup = (oraAttuale >= 8 && oraAttuale < 22) ? "diurno_offline.jpg" : "notturno_offline.jpg";
+                            
+                            footerEl.innerHTML = `
+                                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#ffffff;">
+                                    <img src="${fileLocaleBackup}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\"color:#0a192f; font-weight:900; font-size:2rem; text-align:center;\">FARMACIA AL VOSTRO SERVIZIO</div>'">
+                                </div>`;
+                            console.log("Footer impostato in modalità OFFLINE con file locale: " + fileLocaleBackup);
+                        } else {
+                            // Se siamo online, carichiamo regolarmente il player con il link dinamico di Canva
+                            footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                        }
                     } else {
                         footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
                     }
@@ -335,14 +330,14 @@
                 
                 const txt = await res.text();
                 localStorage.setItem('cacheFarmacia', txt);
-                processaDatiCSV(txt, false);
+                processaDatiCSV(txt, false); // Online, carica Canva
 
             } catch(e) { 
                 console.error("Errore di Rete:", e); 
                 const txtCache = localStorage.getItem('cacheFarmacia');
                 
                 if (txtCache) {
-                    processaDatiCSV(txtCache, true);
+                    processaDatiCSV(txtCache, true); // Offline, usa i file locali salvati
                 } else {
                     document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
                     document.getElementById('header').className = "errore-rete";
@@ -357,7 +352,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateClock();
             setTimeout(carica, 5000); 
-            // Aggiornamento impostato a 2 minuti (120000ms) per maggiore reattività del monitor
             setInterval(carica, 120000); 
         });
     </script>
