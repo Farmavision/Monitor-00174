@@ -161,4 +161,227 @@
                         if (!aperturaEv) return "CONSULTARE GLI ORARI DI TURNO QUI SOTTO";
                         
                         const start = new Date(aperturaEv.start.dateTime || aperturaEv.start.date);
-                        const ora = start.toLocaleTimeString('it-IT', { hour
+                        const ora = start.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                        
+                        if (start.toDateString() === adesso.toDateString()) {
+                            return "RIAPRE OGGI ALLE ORE " + ora;
+                        }
+                        
+                        const domani = new Date(adesso);
+                        domani.setDate(domani.getDate() + 1);
+                        if (start.toDateString() === domani.toDateString()) {
+                            return "RIAPRE DOMANI ALLE ORE " + ora;
+                        }
+                        
+                        const giornoSettimana = start.toLocaleDateString('it-IT', { weekday: 'long' }).toUpperCase();
+                        const dataMese = start.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                        return `RIAPRE ${giornoSettimana} ${dataMese} ALLE ORE ${ora}`;
+                    };
+                    
+                    if (eventoInCorso) {
+                        const titoloInCorso = eventoInCorso.summary ? eventoInCorso.summary.toUpperCase() : "";
+                        
+                        if (titoloInCorso.includes("APERTO")) {
+                            headerEl.className = "aperto"; 
+                            statoEl.innerText = "APERTO";
+                            statoEl.className = "testo-aperto";
+                            const endEv = new Date(eventoInCorso.end.dateTime || eventoInCorso.end.date);
+                            const oraFineStr = endEv.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                            dettEl.innerText = "APERTO FINO ALLE ORE " + oraFineStr;
+                        } else {
+                            headerEl.className = "chiuso"; 
+                            statoEl.innerText = titoloInCorso;
+                            statoEl.className = "testo-chiuso";
+                            dettEl.innerText = calcolaTestoRiapertura(prossimaApertura);
+                        }
+                    } else {
+                        headerEl.className = "chiuso"; 
+                        statoEl.className = "testo-chiuso";
+
+                        const primoFuturoGenerico = data.items.find(ev => new Date(ev.start.dateTime || ev.start.date) > adesso);
+                        const titoloProssimo = primoFuturoGenerico && primoFuturoGenerico.summary ? primoFuturoGenerico.summary.toUpperCase() : "";
+
+                        if (titoloProssimo && !titoloProssimo.includes("APERTO")) {
+                            statoEl.innerText = titoloProssimo;
+                        } else {
+                            statoEl.innerText = "ATTUALMENTE CHIUSA";
+                        }
+
+                        dettEl.innerText = calcolaTestoRiapertura(prossimaApertura);
+                    }
+
+                } else {
+                    headerEl.className = "chiuso";
+                    statoEl.innerText = "ATTUALMENTE CHIUSA";
+                    statoEl.className = "testo-chiuso";
+                    dettEl.innerText = "CONSULTARE GLI ORARI DI TURNO QUI SOTTO";
+                }
+            } catch (error) {
+                console.error("Errore Calendario:", error);
+                impostaErroreCalendario("Errore Sincronizzazione Live Orari");
+            }
+        }
+
+        function impostaErroreCalendario(messaggio) {
+            document.getElementById('header').className = "errore-rete";
+            document.getElementById('stato-testo').innerText = "CALENDARIO OFFLINE";
+            document.getElementById('stato-testo').className = "testo-errore";
+            document.getElementById('orario-dettaglio').innerText = messaggio || "Configurazione in corso...";
+        }
+
+        function sicuroSetItem(chiave, valore) {
+            try { localStorage.setItem(chiave, valore); } catch(e) { console.warn("Impossibile scrivere in localStorage:", e); }
+        }
+        function sicuroGetItem(chiave) {
+            try { return localStorage.getItem(chiave); } catch(e) { console.warn("Impossibile leggere da localStorage:", e); return null; }
+        }
+
+        function escapeHTML(str) {
+            if (!str) return "";
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        async function processaDatiCSV(txt, isOffline = false) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const MIO_ID = urlParams.get('id') || "RM001"; 
+
+            const righe = txt.split(/\r?\n/).map(r => 
+                r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                 .map(v => v.replace(/^"|"$/g, '').trim())
+            );
+            
+            let diurnoHtml = "";
+            let notturnoHtml = "";
+            let ownerTrovato = false;
+
+            const oraAttuale = new Date().getHours();
+            const isDiurnoOra = (oraAttuale >= 8 && oraAttuale < 22);
+
+            for (let i = 1; i < righe.length; i++) {
+                const r = righe[i];
+                if (!r[1]) continue;
+
+                if (r[0] === MIO_ID && r[13] === "O") {
+                    ownerTrovato = true;
+                    document.getElementById('nome-testo-dinamico').innerText = r[1]; 
+                    
+                    const idCalendario = r[7] ? r[7].trim() : "";
+                    controlloAperturaCalendario(idCalendario);
+
+                    let linkSelezionato = isDiurnoOra ? r[5] : r[6];
+                    const comandoCSV = linkSelezionato ? linkSelezionato.trim() : ""; 
+                    const footerEl = document.getElementById('footer-promo');
+                    
+                    if (comandoCSV !== "") {
+                        if (isOffline) {
+                            const fileLocaleBackup = isDiurnoOra ? "diurno_offline.jpg" : "notturno_offline.jpg";
+                            footerEl.innerHTML = `
+                                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#ffffff;">
+                                    <img src="${fileLocaleBackup}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\"color:#0a192f; font-weight:900; font-size:2rem; text-align:center;\">FARMACIA AL VOSTRO SERVIZIO</div>'">
+                                </div>`;
+                            console.log("Footer impostato in modalità OFFLINE con file locale: " + fileLocaleBackup);
+                        } else {
+                            footerEl.innerHTML = `<iframe src="player.html?data=${encodeURIComponent(comandoCSV)}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                        }
+                    } else {
+                        footerEl.innerHTML = `<div style="font-size:3.5rem; font-weight:900; color:#0a192f; text-align:center;">BENVENUTI</div>`;
+                    }
+                } 
+                else if (r[13] === "TD" || r[13] === "TN") {
+                    const qr = r[4] ? `<div class="qr-wrapper"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(r[4])}"></div>` : "";
+                    const nomeT = escapeHTML(r[1]); 
+                    const indT = escapeHTML(r[2]); 
+
+                    const cardHtml = `
+                        <div class="card">
+                            <div class="card-info">
+                                <div style="font-size:0.8rem; color:#94a3b8; font-weight:800;">FARMACIA DI TURNO</div>
+                                <h3>${nomeT}</h3>
+                                <p>${indT}</p>
+                            </div>
+                            ${qr}
+                        </div>`;
+
+                    if (r[13] === "TD") {
+                        diurnoHtml += cardHtml;
+                    } else if (r[13] === "TN") {
+                        notturnoHtml += cardHtml;
+                    }
+                }
+            }
+
+            if (!ownerTrovato) {
+                document.getElementById('nome-testo-dinamico').innerText = "ID " + MIO_ID + " NON TROVATO";
+                document.getElementById('header').className = "errore-rete";
+                document.getElementById('stato-testo').innerText = "---";
+                document.getElementById('orario-dettaglio').innerText = "Verifica Codice ID o GID nel link";
+            }
+            
+            const bloccoDiurno = `
+                <h2 class="titolo-turni">FARMACIE CHE EFFETTUANO SERVIZIO ASSISTENZIALE CONTINUATO 8.00-20.00 - DIURNO -</h2>
+                <div>${diurnoHtml || '<p style="text-align:center; color:#cbd5e1; margin-bottom:20px; font-style:italic;">Nessun turno diurno programmato</p>'}</div>
+            `;
+            
+            const bloccoNotturno = `
+                <h2 class="titolo-turni">FARMACIE CHE EFFETTUANO SERVIZIO ASSISTENZIALE CONTINUATO H24 - NOTTURNO - </h2>
+                <div>${notturnoHtml || '<p style="text-align:center; color:#cbd5e1; margin-bottom:20px; font-style:italic;">Nessun turno notturno programmato</p>'}</div>
+            `;
+
+            const lineaSeparazione = `<div class="separatore-sezioni"></div>`;
+            const containerMain = document.getElementById('container-main');
+            
+            if (isDiurnoOra) {
+                containerMain.innerHTML = bloccoDiurno + lineaSeparazione + bloccoNotturno;
+            } else {
+                containerMain.innerHTML = bloccoNotturno + lineaSeparazione + bloccoDiurno;
+            }
+        }
+
+        async function carica() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const MIO_DIR = urlParams.get('dir') || "h"; 
+            if (MIO_DIR === "v") {
+                document.body.classList.add('v');
+            } else {
+                document.body.classList.remove('v');
+            }
+
+            const MIO_GID = urlParams.get('gid') || "0"; 
+            const baseUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQhadH0ZU3GnAd5fucaWLYZ9s4TzZ5v41_x6xKG7yJYCLGGmQpwVPzbZSimbEcIJjqzcCe2YzS3Jfgt/pub";
+            const urlCompleto = `${baseUrl}?gid=${MIO_GID}&single=true&output=csv`;
+
+            try {
+                const res = await fetch(urlCompleto + "&t=" + Date.now());
+                if (!res.ok) throw new Error("Risposta non OK dal server Google");
+                
+                const txt = await res.text();
+                sicuroSetItem('cacheFarmacia', txt);
+                processaDatiCSV(txt, false);
+
+            } catch(e) { 
+                console.error("Errore di Rete:", e); 
+                const txtCache = sicuroGetItem('cacheFarmacia');
+                
+                if (txtCache) {
+                    processaDatiCSV(txtCache, true);
+                } else {
+                    document.getElementById('nome-testo-dinamico').innerText = "ERRORE CONNESSIONE";
+                    document.getElementById('header').className = "errore-rete";
+                    document.getElementById('stato-testo').innerText = "OFFLINE";
+                    document.getElementById('stato-testo').className = "testo-errore";
+                    document.getElementById('orario-dettaglio').innerText = "Nessun dato in memoria o blocco di sicurezza locale attivo.";
+                    document.getElementById('container-main').innerHTML = `<h3 style="color:#ffcc00; text-align:center; margin-top:20px;">Carica la pagina tramite il link HTTPS di GitHub Pages per superare i blocchi locali.</h3>`;
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setTimeout(carica, 1000);
+            setInterval(carica, 120000); 
+        });
+    </script>
+</body>
+</html>
