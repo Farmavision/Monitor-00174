@@ -335,7 +335,8 @@
             if (isDiurnoOra) {
                 containerMain.innerHTML = bloccoDiurno + lineaSeparazione + bloccoNotturno;
             } else {
-                containerMain.innerHTML = bloccoNotturno + lineaSeparazione + bloccoDiurno;
+                // Di notte mostra SOLO il blocco notturno, senza separatore e senza diurno
+                containerMain.innerHTML = bloccoNotturno;
             }
         }
 
